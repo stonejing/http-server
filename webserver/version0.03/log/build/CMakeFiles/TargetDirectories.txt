@@ -1,0 +1,3 @@
+/mnt/d/Code/Tutorial/Cpp/http-server/webserver/version0.03/log/build/CMakeFiles/rebuild_cache.dir
+/mnt/d/Code/Tutorial/Cpp/http-server/webserver/version0.03/log/build/CMakeFiles/edit_cache.dir
+/mnt/d/Code/Tutorial/Cpp/http-server/webserver/version0.03/log/build/CMakeFiles/LoggingTest.dir
