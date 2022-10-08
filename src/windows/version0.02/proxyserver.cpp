@@ -56,7 +56,7 @@ int ProxyServer::HandleListenSocket()
     if((accept_socket_ = accept(listen_socket_, NULL, NULL)) != INVALID_SOCKET)
     {
         connect_socket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        auto ss = make_shared<Shadowsocks>(accept_socket_, connect_socket_);
+        auto ss = make_shared<Shadowsocks>(accept_socket_, connect_socket_, address_, remote_port_);
         sts_[accept_socket_] = ss;
         return 1;
     }
@@ -79,12 +79,14 @@ int ProxyServer::ServerStart()
         FD_ZERO(&write_set_);
         FD_SET(listen_socket_, &read_set_);
 
+        // windows select 时间复杂度要比 linux 的高，但是更为简便了
         for(auto& kv : sts_)
         {
             FD_SET(kv.second->get_accept_socket(), &read_set_);
             FD_SET(kv.second->get_connect_socket(), &read_set_);
         }
 
+        // select 是阻塞的
         if((select_total_ = select(0, &read_set_, &write_set_, NULL, NULL)) == SOCKET_ERROR)
         {
             log_err("select() return with error %d", WSAGetLastError());

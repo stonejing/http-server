@@ -4,6 +4,7 @@
 #include "windows.h"
 
 #include <memory>
+#include <string>
 
 #include "dbg.h"
 #include "crypto.h"
@@ -70,7 +71,7 @@ using std::make_shared;
 class Shadowsocks
 {
 public:
-    Shadowsocks(SOCKET accept_socket, SOCKET connect_socket) : 
+    Shadowsocks(SOCKET accept_socket, SOCKET connect_socket, std::string address, int port) : 
         accept_socket_(accept_socket),
         connect_socket_(connect_socket),
         stage_(0),
@@ -79,8 +80,8 @@ public:
     {
         ULONG NonBlock = 1;
         remote_server_.sin_family = AF_INET;
-        remote_server_.sin_port = htons(5000);
-        remote_server_.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+        remote_server_.sin_port = htons(port);
+        remote_server_.sin_addr.S_un.S_addr = inet_addr(address.c_str());
         if(ioctlsocket(accept_socket_, FIONBIO, &NonBlock) == SOCKET_ERROR)
         {
             log_err("can not set socket to nonblock %d", WSAGetLastError());
@@ -91,8 +92,7 @@ public:
     {
         log_warn("close socket %d, %d", accept_socket_, connect_socket_);
         closesocket(accept_socket_);
-        if(connect_socket_ != SOCKET_ERROR)
-            closesocket(connect_socket_);
+        closesocket(connect_socket_);
     }
 
     SOCKET get_accept_socket()
