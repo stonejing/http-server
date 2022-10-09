@@ -3,19 +3,20 @@
 #include <string>
 
 std::string address = "127.0.0.1";
-std::string amazon = "52.192.95.12";
+// std::string amazon = "52.192.95.12";
 std::string password = "stonejing";
 
 void StrayDog::StartServer()
 {
     ProxyServer proxy_server(
-        amazon,
-        5000,
+        address,
+        6005,
         password,
         0,
-        5005
+        6000
     );
 
-    proxy_server.EventListen();
+    int ret = proxy_server.EventListen();
+    if(ret == -1) exit(0);
     proxy_server.ServerStart();
 }

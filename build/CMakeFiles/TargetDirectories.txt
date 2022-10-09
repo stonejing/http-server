@@ -1,2 +1,3 @@
-D:/Code/stonejing-http-server/build/CMakeFiles/edit_cache.dir
-D:/Code/stonejing-http-server/build/CMakeFiles/rebuild_cache.dir
+/mnt/d/Code/stonejing-http-server/build/CMakeFiles/rebuild_cache.dir
+/mnt/d/Code/stonejing-http-server/build/CMakeFiles/edit_cache.dir
+/mnt/d/Code/stonejing-http-server/build/CMakeFiles/straydog.dir
