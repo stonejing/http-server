@@ -156,8 +156,9 @@ int Crypto::aead_encrypt(char* plaintext, int plaintext_len,
 
     encrypt_reset_iv();
     int payload_len;
-    aead_chunk_encrypt((uint8_t*)plaintext, plaintext_len, (uint8_t*)ciphertext + salt_len + 2 + 16 + plaintext_len,
-                       (uint8_t*)ciphertext + salt_len + 2 + 16, payload_len);
+    aead_chunk_encrypt((uint8_t*)plaintext, plaintext_len, 
+                    (uint8_t*)ciphertext + salt_len + 2 + 16 + plaintext_len,
+                    (uint8_t*)ciphertext + salt_len + 2 + 16, payload_len);
     ciphertext_len = salt_len + 2 + 16 + plaintext_len + 16;
     encrypt_reset_iv();
     return 1;
@@ -185,12 +186,12 @@ bool Crypto::aead_chunk_decrypt(const uint8_t *ciphertext, int ciphertext_len,
     return true;
 }
 
-int Crypto::aead_decrypt(char* ciphertext, int ciphertext_len, char* plaintext, int& plaintext_len)
+int Crypto::aead_decrypt(char* ciphertext, int ciphertext_len, 
+                        char* plaintext, int& plaintext_len)
 {
     memcpy(decrypt_buffer_ + decrypt_buffer_len_, ciphertext, ciphertext_len);
-
     decrypt_buffer_len_ += ciphertext_len;
-
+    plaintext_len = 0;
     if(!decrypt_init_)
     {
         uint8_t ikey[16];
@@ -242,7 +243,7 @@ int Crypto::aead_decrypt(char* ciphertext, int ciphertext_len, char* plaintext, 
         if(chunk_plen != payload_value_)
         {
             log_err("decrypt payload error: %d %d", payload_value_, chunk_plen);
-            exit(0);
+            return -1;
         }
 
         plen += chunk_plen;

@@ -67,16 +67,21 @@ const int STAGE_STOP        = 6;
 
 using std::shared_ptr;
 using std::make_shared;
+using std::unique_ptr;
+using std::make_unique;
 
 class Shadowsocks
 {
 public:
-    Shadowsocks(SOCKET accept_socket, SOCKET connect_socket, std::string address, int port) : 
+    Shadowsocks(SOCKET accept_socket, SOCKET connect_socket, 
+                std::string address, int port) : 
         accept_socket_(accept_socket),
         connect_socket_(connect_socket),
         stage_(0),
         recv_buffer_len_(0),
-        crypto_(make_shared<Crypto>())
+        send_buffer_len_(0),
+        send_buffer_idx_(0),
+        crypto_(make_unique<Crypto>())
     {
         ULONG NonBlock = 1;
         remote_server_.sin_family = AF_INET;
@@ -90,7 +95,7 @@ public:
 
     ~Shadowsocks()
     {
-        log_warn("close socket %d, %d", accept_socket_, connect_socket_);
+        // log_warn("close socket %d, %d", accept_socket_, connect_socket_);
         closesocket(accept_socket_);
         closesocket(connect_socket_);
     }
@@ -105,8 +110,20 @@ public:
         return connect_socket_;
     }
 
+    int get_write_status()
+    {
+        return (send_buffer_len_ == 0);
+    }
+
+    bool get_direction()
+    {
+        return direction_;
+    }
+
     int ShadowsocksHandleLocal();
     int ShadowsocksHandleRemote();
+
+    int ShadowsocksSend(SOCKET socket);
 
 private:
     int ShadowsocksStageInit();
@@ -117,12 +134,21 @@ private:
     SOCKET accept_socket_;
     SOCKET connect_socket_;
 
+    static const int RECV_BUFFER_SIZE = 1024;
+    static const int SEND_BUFFER_SIZE = 20 * 1024;
+
     int stage_;
 
     struct sockaddr_in remote_server_;
 
-    char recv_buffer_[1024];
+    char recv_buffer_[RECV_BUFFER_SIZE];
     int recv_buffer_len_;
 
-    shared_ptr<Crypto> crypto_;
+    char send_buffer_[SEND_BUFFER_SIZE];
+    int send_buffer_len_;
+
+    int send_buffer_idx_;
+    bool direction_; // true for accept, false for connect 
+
+    unique_ptr<Crypto> crypto_;
 };

@@ -17,6 +17,6 @@ void StrayDog::StartServer()
     );
 
     int ret = proxy_server.EventListen();
-    if(ret == -1) exit(0);
+    if(ret == -1) return;
     proxy_server.ServerStart();
 }

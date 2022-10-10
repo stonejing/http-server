@@ -15,10 +15,16 @@ class Crypto
 {
 public:
     Crypto();
-    ~Crypto() {};
+    ~Crypto()
+    {
+        EVP_CIPHER_CTX_free(enc_ctx_);
+        EVP_CIPHER_CTX_free(dec_ctx_);
+    };
 
-    int aead_encrypt(char* plaintext, int plaintext_len, char* ciphertext, int& ciphertext_len);
-    int aead_decrypt(char* ciphertext, int ciphertext_len, char* plaintext, int& plaintext_len);
+    int aead_encrypt(char* plaintext, int plaintext_len, 
+                    char* ciphertext, int& ciphertext_len);
+    int aead_decrypt(char* ciphertext, int ciphertext_len, 
+                    char* plaintext, int& plaintext_len);
 
 private:
     int rand_bytes(uint8_t* buf, int num);

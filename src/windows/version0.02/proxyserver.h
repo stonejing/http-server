@@ -16,7 +16,9 @@
 
 using std::string;
 using std::shared_ptr;
+using std::unique_ptr;
 using std::make_shared;
+using std::make_unique;
 using std::unordered_map;
 
 class ProxyServer
@@ -55,7 +57,7 @@ private:
     SOCKET          accept_socket_;
     SOCKET          connect_socket_;
 
-    unordered_map<SOCKET, shared_ptr<Shadowsocks>> sts_;
+    unordered_map<SOCKET, unique_ptr<Shadowsocks>> sts_;
 };
 
 #endif

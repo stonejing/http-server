@@ -1,16 +1,47 @@
 #include "shadowsocks.h"
+#include <iostream>
+
+using std::cerr;
+
+int Shadowsocks::ShadowsocksSend(SOCKET socket)
+{
+    int r = send(socket, send_buffer_ + send_buffer_idx_, 
+                    send_buffer_len_, 0);
+    if(r == -1)
+    {
+        if(WSAGetLastError() == WSAEWOULDBLOCK)
+        {
+            return 1;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    else if(r < send_buffer_len_)
+    {
+        send_buffer_idx_ += r;
+        send_buffer_len_ -= r;
+        return 1;
+    }
+    send_buffer_idx_ = 0;
+    send_buffer_len_ = 0;
+    return 1;
+}
 
 int Shadowsocks::ShadowsocksHandleLocal()
 {
-    int r = recv(accept_socket_, recv_buffer_ + recv_buffer_len_, 1024 - recv_buffer_len_, 0);
+    int r = recv(accept_socket_, recv_buffer_ + recv_buffer_len_, 
+                    1024 - recv_buffer_len_, 0);
     if(r == 0)
     {
         return -1;
     }
-    else if(r == 1)
+    else if(r == SOCKET_ERROR)
     {
-        if(WSAGetLastError() == EAGAIN || WSAGetLastError() == EWOULDBLOCK)
+        if(WSAGetLastError() == WSAEWOULDBLOCK)
         {
+            log_info("handle local WSAEWOULDBLOCK.");
             return 1;
         }
         else
@@ -39,7 +70,7 @@ int Shadowsocks::ShadowsocksHandleLocal()
     }
     else
     {
-        log_err("unknown happed stage: %d", stage_);
+        log_err("unknown happened stage: %d", stage_);
         return -1;
     }
     recv_buffer_len_ = 0;
@@ -100,18 +131,15 @@ int Shadowsocks::ShadowsocksStageHandshake()
         log_err("can not set socket to nonblock %d", WSAGetLastError());
     }
 
-    char ciphertext[2048];
-    int ciphertext_len;
-
     if(crypto_->aead_encrypt(recv_buffer_ + 3, recv_buffer_len_ - 3, 
-                            ciphertext, ciphertext_len) == -1)
+                            send_buffer_, send_buffer_len_) == -1)
     {
         log_err("connect encryption error.");
         return -1;
     }
 
-    send(connect_socket_, ciphertext, ciphertext_len, 0);
-
+    send(connect_socket_, send_buffer_, send_buffer_len_, 0);
+    send_buffer_len_ = 0;
     recv_buffer_[1] = SOCKS5_REP_SUCCEEDED;
 
     send(accept_socket_, recv_buffer_, recv_buffer_len_, 0);
@@ -121,28 +149,47 @@ int Shadowsocks::ShadowsocksStageHandshake()
 
 int Shadowsocks::ShadowsocksStageStream()
 {
-    char ciphertext[2048];
-    int ciphertext_len;
     if(crypto_->aead_encrypt(recv_buffer_, recv_buffer_len_, 
-            ciphertext, ciphertext_len) == -1)
+            send_buffer_, send_buffer_len_) == -1)
     {
         return -1;
     }
-    int r = send(connect_socket_, ciphertext, ciphertext_len, 0);
-    if(r != ciphertext_len) return -1;
+    int s = send(connect_socket_, send_buffer_, send_buffer_len_, 0);
+    if(s == -1)
+    {
+        if(WSAGetLastError() == WSAEWOULDBLOCK)
+        {
+            direction_ = true;
+            return 1;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    else if(s < send_buffer_len_)
+    {
+        send_buffer_idx_ = s;
+        direction_ = true;
+        return 1;
+    }
+    send_buffer_len_ = 0;
+
     return 1;
 }
 
 int Shadowsocks::ShadowsocksHandleRemote()
 {
-    char plaintext[20 * 1024];
-    int plaintext_len = 0;
+    int r = recv(connect_socket_, recv_buffer_ + recv_buffer_len_, 
+                1024 - recv_buffer_len_, 0);
 
-    int r = recv(connect_socket_, recv_buffer_ + recv_buffer_len_, 1024 - recv_buffer_len_, 0);
-
-    if(r <= 0)
+    if(r == 0)
     {
-        if(WSAGetLastError() == EAGAIN || WSAGetLastError() == EWOULDBLOCK)
+        return -1;
+    }
+    else if(r == SOCKET_ERROR)
+    {
+        if(WSAGetLastError() == WSAEWOULDBLOCK)
         {
             return 1;
         }
@@ -155,15 +202,40 @@ int Shadowsocks::ShadowsocksHandleRemote()
     recv_buffer_len_ =+ r;
 
     int ret = crypto_->aead_decrypt(recv_buffer_, recv_buffer_len_, 
-                                    plaintext, plaintext_len);
-
-    if(plaintext_len == 0)
+                                    send_buffer_, send_buffer_len_);
+    
+    if(ret == -1) return -1;
+    
+    if(send_buffer_len_ == 0)
     {
         recv_buffer_len_ = 0;
         return 1;
     }
 
-    send(accept_socket_, plaintext, plaintext_len, 0);
     recv_buffer_len_ = 0;
+
+    int s = send(accept_socket_, send_buffer_, send_buffer_len_, 0);
+    if(s == -1)
+    {
+        if(WSAGetLastError() == WSAEWOULDBLOCK)
+        {
+            direction_ = false;
+            return 1;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    else if(s < send_buffer_len_)
+    {
+        send_buffer_idx_ = s;
+        direction_ = false;
+        return 1;
+    }
+    send_buffer_len_ = 0;
+
     return 1;
 }
+
+
