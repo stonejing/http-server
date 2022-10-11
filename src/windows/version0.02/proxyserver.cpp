@@ -8,7 +8,8 @@ ProxyServer::ProxyServer(string& address, int remote_port,
                         int local_port) : 
     address_(address), remote_port_(remote_port),
     password_(password), method_(method),
-    local_port_(local_port), select_total_(0)
+    local_port_(local_port), select_total_(0),
+    thread_pool_(make_unique<ThreadPool>(std::thread::hardware_concurrency() - 1))
 {
     local_server_.sin_family = AF_INET;
     local_server_.sin_port = htons(local_port_);

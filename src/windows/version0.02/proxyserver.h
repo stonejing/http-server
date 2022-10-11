@@ -13,6 +13,7 @@
 
 #include "shadowsocks.h"
 #include "dbg.h"
+#include "threadpool.h"
 
 using std::string;
 using std::shared_ptr;
@@ -58,6 +59,7 @@ private:
     SOCKET          connect_socket_;
 
     unordered_map<SOCKET, unique_ptr<Shadowsocks>> sts_;
+    unique_ptr<ThreadPool> thread_pool_;
 };
 
 #endif
