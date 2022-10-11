@@ -21,7 +21,7 @@ using std::string;
 class EventLoop
 {
 public:
-    EventLoop(string& address, int remote_port);
+    EventLoop(SOCKET listen_socket, string& address, int remote_port);
     ~EventLoop();
 
     void Loop();
@@ -38,7 +38,7 @@ private:
     void HandleAcceptSocket();
 
     unordered_map<SOCKET, unique_ptr<Shadowsocks>> sts_;
-    vector<SOCKET> socket_array_;
+
     std::mutex mutex_;
 
     FD_SET read_set_;

@@ -1,8 +1,8 @@
 #include "eventloop.h"
 
-EventLoop::EventLoop(string& address, int remote_port)
+EventLoop::EventLoop(SOCKET listen_socket, string& address, int remote_port)
     : address_(address), remote_port_(remote_port),
-        accept_loop_(0)
+        accept_loop_(0), listen_socket_(listen_socket)
 {
 
 }
@@ -14,10 +14,14 @@ EventLoop::~EventLoop()
 
 void EventLoop::Loop()
 {
+    // SOCKET dumb = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
     while(true)
     {
         FD_ZERO(&read_set_);
         FD_ZERO(&write_set_);
+
+        FD_SET(listen_socket_, &read_set_);
 
         std::vector<SOCKET> write_;
 
@@ -25,7 +29,6 @@ void EventLoop::Loop()
         {
             if(!kv.second->get_write_status())
             {
-                log_info("write set");
                 write_.push_back(kv.second->get_accept_socket());
                 write_.push_back(kv.second->get_connect_socket());
                 FD_SET(kv.second->get_accept_socket(), &write_set_);
@@ -37,14 +40,15 @@ void EventLoop::Loop()
                 FD_SET(kv.second->get_connect_socket(), &read_set_);
             }
         }
-        
+
         int ret = select(0, &read_set_, &write_set_, NULL, NULL);
+
         if(ret == SOCKET_ERROR)
         {
             log_err("select() return with error %d", WSAGetLastError());
             abort();
         }
-        
+
         for(int i = 0; i < write_.size(); i++)
         {
             if(FD_ISSET(write_[i], &write_set_))
@@ -80,6 +84,8 @@ void EventLoop::Loop()
             }
             it++;
         }
+
+        HandleListenSocket();
     }
 }
 
@@ -91,8 +97,15 @@ void EventLoop::IncreaseAccept()
 
 int EventLoop::HandleListenSocket()
 {
-    std::lock_guard<std::mutex> guard(mutex_);
-    while(accept_loop_--)
+    int num;
+
+    {
+        std::lock_guard<std::mutex> guard(mutex_);
+        num = accept_loop_;
+        accept_loop_ = 0;
+    }
+
+    while(num != 0)
     {
         if((accept_socket_ = accept(listen_socket_, NULL, NULL)) != INVALID_SOCKET)
         {
@@ -110,6 +123,7 @@ int EventLoop::HandleListenSocket()
                 return -1;
             }
         }
+        --num;
     }
     return 1;
 }

@@ -95,7 +95,6 @@ public:
 
     ~Shadowsocks()
     {
-        // log_warn("close socket %d, %d", accept_socket_, connect_socket_);
         closesocket(accept_socket_);
         closesocket(connect_socket_);
     }

@@ -50,15 +50,10 @@ private:
     int             method_;
 
     FD_SET          read_set_;
-    FD_SET          write_set_;
 
     int             local_port_;
-
     int             select_total_;
-    SOCKET          accept_socket_;
-    SOCKET          connect_socket_;
 
-    unordered_map<SOCKET, unique_ptr<Shadowsocks>> sts_;
     unique_ptr<ThreadPool> thread_pool_;
 };
 
