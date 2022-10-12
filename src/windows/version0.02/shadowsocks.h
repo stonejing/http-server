@@ -2,6 +2,7 @@
 
 #include "winsock2.h"
 #include "windows.h"
+#include <WS2tcpip.h>
 
 #include <memory>
 #include <string>
@@ -35,7 +36,7 @@ const unsigned char SOCKS5_REP_FF_UNASSIGNED = 0x09;
 struct method_select_request {
     unsigned char ver;
     unsigned char nmethods;
-    unsigned char methods[0];
+    unsigned char methods;
 };
 
 struct method_select_response {
@@ -86,7 +87,8 @@ public:
         ULONG NonBlock = 1;
         remote_server_.sin_family = AF_INET;
         remote_server_.sin_port = htons(port);
-        remote_server_.sin_addr.S_un.S_addr = inet_addr(address.c_str());
+        //remote_server_.sin_addr.S_un.S_addr = inet_pton(address.c_str());
+        InetPton(AF_INET, address.c_str(), &remote_server_.sin_addr.S_un.S_addr);
         if(ioctlsocket(accept_socket_, FIONBIO, &NonBlock) == SOCKET_ERROR)
         {
             log_err("can not set socket to nonblock %d", WSAGetLastError());

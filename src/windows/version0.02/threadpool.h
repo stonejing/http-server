@@ -10,6 +10,8 @@
 #include "windows.h"
 #include "winsock2.h"
 
+#include <mutex>
+
 class ThreadPool {
 public:
     ThreadPool(int thread_numbers, SOCKET listen_socket, std::string& address, int remote_port);
@@ -30,6 +32,11 @@ private:
     std::string address_;
     int remote_port_;
     SOCKET listen_socket_;
+
+    std::mutex mutex_;
+
+    int index = 0;
+    bool start_ = false;
 };
  
 // the constructor just launches some amount of workers
@@ -47,23 +54,37 @@ inline ThreadPool::ThreadPool(int thread_numbers, SOCKET listen_socket, std::str
            );
         workers[i].detach();
     }
+    start_ = true;
 }
 
 inline void ThreadPool::StartLoop()
 {
     std::shared_ptr<EventLoop> t = std::make_shared<EventLoop>(listen_socket_, address_, remote_port_);
-    loops_.emplace_back(t);
+    
+    {
+        std::lock_guard<std::mutex> guard(mutex_);
+        loops_.push_back(t);
+    }
+
     t->Loop();
 }
 
 inline std::shared_ptr<EventLoop> ThreadPool::GetNextThread()
 {
-    // std::shared_ptr<EventLoop> loop = loops_[next_];
+    if (start_)
+    {
+        //std::cout << next_ << "th thread." << std::endl;
+        //if (loops_.size() != thread_numbers_)
+        //{
+        //    std::cout << "thread create failed." << std::endl;
+        //}
+        auto& loop = loops_[next_];
 
-    auto &loop = loops_[next_];
-    next_ = (next_ + 1) % thread_numbers_;
+        next_ = (next_ + 1) % thread_numbers_;
 
-    return loop;
+        return loop;
+    }
+    return nullptr;
 }
 
 // the destructor joins all threads

@@ -40,7 +40,7 @@ int ProxyServer::EventListen()
         return -1;
     }
 
-    if((listen_socket_ = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 
+    if((listen_socket_ = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 
                             0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET)
     {
         log_err("WSASocket() failed with error %d", WSAGetLastError());
@@ -66,10 +66,10 @@ int ProxyServer::EventListen()
         return -1;
     }
 
-    thread_pool_ = make_unique<ThreadPool>(std::thread::hardware_concurrency() - 1,
+    thread_pool_ = make_unique<ThreadPool>(std::thread::hardware_concurrency() - 4,
                                             listen_socket_, address_, remote_port_);
 
-    log_info("server started in 0.0.0.0:%d", local_port_);
+    std::cout << "server started in 0.0.0.0:" << local_port_ << std::endl;
     return 1;
 }
 
@@ -90,7 +90,12 @@ int ProxyServer::ServerStart()
 
         if(FD_ISSET(listen_socket_, &read_set_))
         {
-            thread_pool_->GetNextThread()->IncreaseAccept();
+            //thread_pool_->GetNextThread()->IncreaseAccept();
+            auto eventloop = thread_pool_->GetNextThread();
+            if (eventloop)
+            {
+                eventloop->IncreaseAccept();
+            }
         }
     }
 }

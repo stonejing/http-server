@@ -62,5 +62,4 @@ private:
     uint8_t decrypt_buffer_[20 * 1024];
     int decrypt_buffer_len_;
     int payload_value_;
-
 };
