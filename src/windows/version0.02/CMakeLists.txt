@@ -1,9 +1,26 @@
-project(straydog)
 cmake_MINIMUM_REQUIRED(VERSION 3.11)
 
-set(MY_TARGET straydog)
+project(straydog VERSION 0.02)
 
-AUX_SOURCE_DIRECTORY(. SRC_LIST)
+set(CMAKE_CXX_STANDARD 11)
 
-add_executable(${MY_TARGET} ${SRC_LIST})
+SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 -pthread")
 
+find_package(Threads REQUIRED)
+# find_package(OpenSSL REQUIRED)
+
+include_directories("D:/Program Files (x86)/OpenSSL-Win64/include")
+
+set(OpenSSL_LIBS "D:/Program Files (x86)/OpenSSL-Win64/lib")
+
+link_directories("D:/Program Files (x86)/OpenSSL-Win64/lib/")
+
+add_executable(cmake_test cmake_test.cpp)
+target_link_libraries(cmake_test ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(cmake_test wsock32 ws2_32)
+target_link_libraries(cmake_test libssl_static libcrypto_static)
+
+add_executable(straydog main.cpp straydog.cpp proxyserver.cpp shadowsocks.cpp crypto.cpp eventloop.cpp)
+target_link_libraries(straydog ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(straydog wsock32 ws2_32)
+target_link_libraries(straydog libssl_static libcrypto_static)

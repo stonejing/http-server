@@ -36,26 +36,26 @@ struct method_select_request {
     unsigned char ver;
     unsigned char nmethods;
     unsigned char methods[0];
-} __attribute__((packed, aligned(1)));
+};
 
 struct method_select_response {
     unsigned char ver;
     unsigned char method;
-} __attribute__((packed, aligned(1)));
+};
 
 struct socks5_request {
     unsigned char ver;
     unsigned char cmd;
     unsigned char rsv;
     unsigned char atyp;
-} __attribute__((packed, aligned(1)));
+};
 
 struct socks5_response {
     unsigned char ver;
     unsigned char rep;
     unsigned char rsv;
     unsigned char atyp;
-} __attribute__((packed, aligned(1)));
+};
 
 const int STAGE_ERROR       = -1;
 const int STAGE_INIT        = 0;

@@ -37,13 +37,16 @@ inline ThreadPool::ThreadPool(int thread_numbers, SOCKET listen_socket, std::str
     :   thread_numbers_(thread_numbers), next_(0), address_(address), remote_port_(remote_port),
         listen_socket_(listen_socket)
 {
-    for(int i = 0; i < thread_numbers_; i++)
+    for (int i = 0; i < thread_numbers_; i++)
+    {
         workers.emplace_back(
             [this]
             {
                 this->StartLoop();
             }
-        );
+           );
+        workers[i].detach();
+    }
 }
 
 inline void ThreadPool::StartLoop()
@@ -55,15 +58,17 @@ inline void ThreadPool::StartLoop()
 
 inline std::shared_ptr<EventLoop> ThreadPool::GetNextThread()
 {
-    std::shared_ptr<EventLoop> loop = loops_[next_];
+    // std::shared_ptr<EventLoop> loop = loops_[next_];
+
+    auto &loop = loops_[next_];
     next_ = (next_ + 1) % thread_numbers_;
-    // std::cout << next_ <<"th thread." << std::endl;
+
     return loop;
 }
 
 // the destructor joins all threads
 inline ThreadPool::~ThreadPool()
 {
-    for(std::thread &worker: workers)
-        worker.join();
+    //for(std::thread &worker: workers)
+    //    worker.join();
 }

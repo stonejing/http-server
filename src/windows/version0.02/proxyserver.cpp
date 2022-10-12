@@ -66,7 +66,7 @@ int ProxyServer::EventListen()
         return -1;
     }
 
-    thread_pool_ = make_unique<ThreadPool>(std::thread::hardware_concurrency() - 2, 
+    thread_pool_ = make_unique<ThreadPool>(std::thread::hardware_concurrency() - 1,
                                             listen_socket_, address_, remote_port_);
 
     log_info("server started in 0.0.0.0:%d", local_port_);
