@@ -95,6 +95,7 @@ int ProxyServer::ServerStart()
             if (eventloop)
             {
                 eventloop->IncreaseAccept();
+                //eventloop->IncreaseAtomicNum();
             }
         }
     }

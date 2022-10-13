@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <atomic>
 
 #include <mutex> 
 
@@ -32,6 +33,11 @@ public:
 
     void IncreaseAccept();
 
+    void IncreaseAtomicNum()
+    {
+        atomic_num_++;
+    }
+
 private:
 
     int HandleListenSocket();
@@ -49,6 +55,7 @@ private:
     SOCKET connect_socket_;
 
     int accept_loop_;
+    std::atomic<int> atomic_num_;
 
     string address_;
     int    remote_port_;

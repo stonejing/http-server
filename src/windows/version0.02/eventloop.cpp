@@ -105,6 +105,9 @@ int EventLoop::HandleListenSocket()
         accept_loop_ = 0;
     }
 
+    //int num = atomic_num_;
+    //atomic_num_ = 0;
+
     while(num != 0)
     {
         if((accept_socket_ = accept(listen_socket_, NULL, NULL)) != INVALID_SOCKET)
