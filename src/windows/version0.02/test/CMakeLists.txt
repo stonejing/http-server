@@ -3,8 +3,11 @@
 
 # add_executable(mysqrt mysqrt.cpp)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 include_directories("D:/Program Files (x86)/OpenSSL-Win64/include")
 include_directories("D:/Program Files (x86)/WinDivert-2.2.1-A/include")
+
 
 link_directories("D:/Program Files (x86)/OpenSSL-Win64/lib/")
 link_directories("D:/Program Files (x86)/WinDivert-2.2.1-A/x64")

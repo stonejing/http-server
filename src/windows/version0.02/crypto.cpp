@@ -223,7 +223,7 @@ int Crypto::aead_decrypt(char* ciphertext, int ciphertext_len,
 
             if(payload_value_ > 16383 || payload_value_ <= 0 || decode_len != 2)
             {
-                log_err("payload length decryption error detected %d, decode_len: ", payload_value_, decode_len);
+                log_err("payload length decryption error detected %d, decode_len: %d", payload_value_, decode_len);
                 exit(0);
             }
 

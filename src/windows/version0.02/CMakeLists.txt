@@ -1,5 +1,7 @@
 cmake_MINIMUM_REQUIRED(VERSION 3.11)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 project(straydog VERSION 0.02)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -8,8 +10,7 @@ SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 -pthread")
 
 find_package(Threads REQUIRED)
 
-# add_subdirectory(test)
-# find_package(OpenSSL REQUIRED)
+add_subdirectory(test)
 
 include_directories("D:/Program Files (x86)/OpenSSL-Win64/include")
 include_directories("D:/Program Files (x86)/WinDivert-2.2.1-A/include")

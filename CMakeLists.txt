@@ -9,3 +9,6 @@ set(CMAKE_CXX_COMPILER g++)
 
 project(straydog)
 
+add_executable(test test.cpp)
+
+set(project name)
