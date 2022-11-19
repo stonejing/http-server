@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/mnt/d/Code/Tutorial/Cpp/http-server/webserver/version0.03/log/LogStream.h
+assert.h
+-
+string.h
+-
+string
+-
+
+/mnt/d/Code/Tutorial/Cpp/http-server/webserver/version0.03/log/Logging.h
+LogStream.h
+/mnt/d/Code/Tutorial/Cpp/http-server/webserver/version0.03/log/LogStream.h
+pthread.h
+-
+string
+-
+stdio.h
+-
+
+/mnt/d/Code/Tutorial/Cpp/http-server/webserver/version0.03/log/LoggingTest.cpp
+Logging.h
+/mnt/d/Code/Tutorial/Cpp/http-server/webserver/version0.03/log/Logging.h
+unistd.h
+-
+iostream
+-
+

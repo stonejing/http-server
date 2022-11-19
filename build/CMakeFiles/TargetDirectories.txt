@@ -1,9 +1,3 @@
-D:/Code/stonejing-http-server/build/CMakeFiles/edit_cache.dir
-D:/Code/stonejing-http-server/build/CMakeFiles/rebuild_cache.dir
-D:/Code/stonejing-http-server/build/src/CMakeFiles/edit_cache.dir
-D:/Code/stonejing-http-server/build/src/CMakeFiles/rebuild_cache.dir
-D:/Code/stonejing-http-server/build/src/windows/CMakeFiles/edit_cache.dir
-D:/Code/stonejing-http-server/build/src/windows/CMakeFiles/rebuild_cache.dir
-D:/Code/stonejing-http-server/build/src/windows/straydog/CMakeFiles/straydog.dir
-D:/Code/stonejing-http-server/build/src/windows/straydog/CMakeFiles/edit_cache.dir
-D:/Code/stonejing-http-server/build/src/windows/straydog/CMakeFiles/rebuild_cache.dir
+D:/Code/stonejing-http-server/build/CMakeFiles/ALL_BUILD.dir
+D:/Code/stonejing-http-server/build/CMakeFiles/ZERO_CHECK.dir
+D:/Code/stonejing-http-server/build/windows/straydog/CMakeFiles/straydog.dir
