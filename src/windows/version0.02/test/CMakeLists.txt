@@ -5,12 +5,12 @@
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-include_directories("D:/Program Files (x86)/OpenSSL-Win64/include")
-include_directories("D:/Program Files (x86)/WinDivert-2.2.1-A/include")
+include_directories("D:/Program/OpenSSL/include")
+include_directories("D:/Program/WinDivert-2.2.1-A/include")
 
 
-link_directories("D:/Program Files (x86)/OpenSSL-Win64/lib/")
-link_directories("D:/Program Files (x86)/WinDivert-2.2.1-A/x64")
+link_directories("D:/Program/OpenSSL/lib/")
+link_directories("D:/Program/WinDivert-2.2.1-A/x64")
 
 add_executable(cmake_test cmake_test.cpp)
 target_link_libraries(cmake_test ${CMAKE_THREAD_LIBS_INIT})

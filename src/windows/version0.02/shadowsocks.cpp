@@ -119,7 +119,7 @@ int Shadowsocks::ShadowsocksStageHandshake()
         return -1;
     }
 
-    if(connect(connect_socket_, (SOCKADDR*)&remote_server_, sizeof(remote_server_)) < 0)
+    if(::connect(connect_socket_, (SOCKADDR*)&remote_server_, sizeof(remote_server_)) < 0)
     {
         log_err("connect remote error %d", WSAGetLastError());
         return -1;

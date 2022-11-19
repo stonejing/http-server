@@ -1,8 +1,8 @@
 *.exe
 
-.vs/
+/.vs
 
-build/
+/build
 
-.vscode/
-.cache/
+/.vscode
+/.cache

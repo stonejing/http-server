@@ -4,19 +4,19 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(straydog VERSION 0.02)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
-SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 -pthread")
+SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++14 -pthread")
 
 find_package(Threads REQUIRED)
 
 add_subdirectory(test)
 
-include_directories("D:/Program Files (x86)/OpenSSL-Win64/include")
-include_directories("D:/Program Files (x86)/WinDivert-2.2.1-A/include")
+include_directories("D:/Program/OpenSSL/include")
+include_directories("D:/Program/WinDivert-2.2.1-A/include")
 
-link_directories("D:/Program Files (x86)/OpenSSL-Win64/lib/")
-link_directories("D:/Program Files (x86)/WinDivert-2.2.1-A/x64")
+link_directories("D:/Program/OpenSSL/lib/")
+link_directories("D:/Program/WinDivert-2.2.1-A/x64")
 
 add_executable(straydog main.cpp straydog.cpp proxyserver.cpp shadowsocks.cpp crypto.cpp eventloop.cpp)
 
