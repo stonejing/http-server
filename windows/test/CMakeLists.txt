@@ -17,7 +17,12 @@ target_link_libraries(cmake_test ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(cmake_test wsock32 ws2_32)
 target_link_libraries(cmake_test libssl_static libcrypto_static)
 
-add_executable(windivert_test windivert_test.cpp)
-target_link_libraries(windivert_test WinDivert)
+# add_executable(windivert_test windivert_test.cpp)
+# target_link_libraries(windivert_test WinDivert)
 
-add_executable(mysqrt_test mysqrt.cpp)
+enable_testing()
+add_executable(log_test log_test.cpp)
+add_test(NAME log_test1 COMMAND log_test)
+
+add_executable(vector_test vector_test.cpp)
+add_executable(block_echo_server block_echo_server.cpp)

@@ -1,0 +1,10 @@
+﻿  socketdump.c
+D:\Code\proxy-software\WinDivert-2.2.1\examples\socketdump\socketdump.c(187,16): warning C4477: 'printf' : format string '%lu' requires an argument of type 'unsigned long', but variadic argument 1 has type 'UINT64'
+D:\Code\proxy-software\WinDivert-2.2.1\examples\socketdump\socketdump.c(187,16): message : consider using '%llu' in the format string
+D:\Code\proxy-software\WinDivert-2.2.1\examples\socketdump\socketdump.c(187,16): message : consider using '%Iu' in the format string
+D:\Code\proxy-software\WinDivert-2.2.1\examples\socketdump\socketdump.c(187,16): message : consider using '%I64u' in the format string
+D:\Code\proxy-software\WinDivert-2.2.1\examples\socketdump\socketdump.c(193,16): warning C4477: 'printf' : format string '%lu' requires an argument of type 'unsigned long', but variadic argument 1 has type 'UINT64'
+D:\Code\proxy-software\WinDivert-2.2.1\examples\socketdump\socketdump.c(193,16): message : consider using '%llu' in the format string
+D:\Code\proxy-software\WinDivert-2.2.1\examples\socketdump\socketdump.c(193,16): message : consider using '%Iu' in the format string
+D:\Code\proxy-software\WinDivert-2.2.1\examples\socketdump\socketdump.c(193,16): message : consider using '%I64u' in the format string
+LINK : fatal error LNK1104: cannot open file '..\..\install\MSVC\amd64\WinDivert.lib'

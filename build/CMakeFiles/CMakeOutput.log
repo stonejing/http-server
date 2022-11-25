@@ -7,7 +7,7 @@ Id flags:
 The output was:
 0
 MSBuild version 17.3.1+2badb37d1 for .NET Framework
-生成启动时间为 2022/11/19 22:42:23。
+生成启动时间为 2022/11/21 10:44:45。
 节点 1 上的项目“D:\Code\stonejing-http-server\build\CMakeFiles\3.25.0-rc4\CompilerIdC\CompilerIdC.vcxproj”(默认目标)。
 PrepareForBuild:
   正在创建目录“Debug\”。
@@ -33,7 +33,7 @@ FinalizeBuildStatus:
     0 个警告
     0 个错误
 
-已用时间 00:00:00.99
+已用时间 00:00:02.02
 
 
 Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.exe"
@@ -50,7 +50,7 @@ Id flags:
 The output was:
 0
 MSBuild version 17.3.1+2badb37d1 for .NET Framework
-生成启动时间为 2022/11/19 22:42:24。
+生成启动时间为 2022/11/21 10:44:48。
 节点 1 上的项目“D:\Code\stonejing-http-server\build\CMakeFiles\3.25.0-rc4\CompilerIdCXX\CompilerIdCXX.vcxproj”(默认目标)。
 PrepareForBuild:
   正在创建目录“Debug\”。
@@ -76,7 +76,7 @@ FinalizeBuildStatus:
     0 个警告
     0 个错误
 
-已用时间 00:00:00.74
+已用时间 00:00:00.89
 
 
 Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
@@ -86,26 +86,26 @@ Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" p
 The CXX compiler identification is MSVC, found in "D:/Code/stonejing-http-server/build/CMakeFiles/3.25.0-rc4/CompilerIdCXX/CompilerIdCXX.exe"
 
 Detecting C compiler ABI info compiled with the following output:
-Change Dir: D:/Code/stonejing-http-server/build/CMakeFiles/CMakeScratch/TryCompile-vfj3hb
+Change Dir: D:/Code/stonejing-http-server/build/CMakeFiles/CMakeScratch/TryCompile-im5jjf
 
-Run Build Command(s):D:/Program/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_e518b.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:m && MSBuild version 17.3.1+2badb37d1 for .NET Framework
+Run Build Command(s):D:/Program/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_ba7ba.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:m && MSBuild version 17.3.1+2badb37d1 for .NET Framework
   Microsoft (R) C/C++ Optimizing Compiler Version 19.33.31630 for x64
   CMakeCCompilerABI.c
   Copyright (C) Microsoft Corporation.  All rights reserved.
-  cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_e518b.dir\Debug\\" /Fd"cmTC_e518b.dir\Debug\vc143.pdb" /external:W3 /Gd /TC /errorReport:queue "C:\Program Files\CMake\share\cmake-3.25\Modules\CMakeCCompilerABI.c"
-  cmTC_e518b.vcxproj -> D:\Code\stonejing-http-server\build\CMakeFiles\CMakeScratch\TryCompile-vfj3hb\Debug\cmTC_e518b.exe
+  cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_ba7ba.dir\Debug\\" /Fd"cmTC_ba7ba.dir\Debug\vc143.pdb" /external:W3 /Gd /TC /errorReport:queue "C:\Program Files\CMake\share\cmake-3.25\Modules\CMakeCCompilerABI.c"
+  cmTC_ba7ba.vcxproj -> D:\Code\stonejing-http-server\build\CMakeFiles\CMakeScratch\TryCompile-im5jjf\Debug\cmTC_ba7ba.exe
 
 
 
 Detecting CXX compiler ABI info compiled with the following output:
-Change Dir: D:/Code/stonejing-http-server/build/CMakeFiles/CMakeScratch/TryCompile-2wfx6u
+Change Dir: D:/Code/stonejing-http-server/build/CMakeFiles/CMakeScratch/TryCompile-ahqp55
 
-Run Build Command(s):D:/Program/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_339a2.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:m && MSBuild version 17.3.1+2badb37d1 for .NET Framework
+Run Build Command(s):D:/Program/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_ef57f.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:m && MSBuild version 17.3.1+2badb37d1 for .NET Framework
   Microsoft (R) C/C++ Optimizing Compiler Version 19.33.31630 for x64
   CMakeCXXCompilerABI.cpp
   Copyright (C) Microsoft Corporation.  All rights reserved.
-  cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_339a2.dir\Debug\\" /Fd"cmTC_339a2.dir\Debug\vc143.pdb" /external:W3 /Gd /TP /errorReport:queue "C:\Program Files\CMake\share\cmake-3.25\Modules\CMakeCXXCompilerABI.cpp"
-  cmTC_339a2.vcxproj -> D:\Code\stonejing-http-server\build\CMakeFiles\CMakeScratch\TryCompile-2wfx6u\Debug\cmTC_339a2.exe
+  cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_ef57f.dir\Debug\\" /Fd"cmTC_ef57f.dir\Debug\vc143.pdb" /external:W3 /Gd /TP /errorReport:queue "C:\Program Files\CMake\share\cmake-3.25\Modules\CMakeCXXCompilerABI.cpp"
+  cmTC_ef57f.vcxproj -> D:\Code\stonejing-http-server\build\CMakeFiles\CMakeScratch\TryCompile-ahqp55\Debug\cmTC_ef57f.exe
 
 
 

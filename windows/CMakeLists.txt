@@ -1,1 +1,2 @@
-add_subdirectory(straydog)
+add_subdirectory(src)
+add_subdirectory(test)

@@ -1,3 +1,7 @@
 D:/Code/stonejing-http-server/build/CMakeFiles/ALL_BUILD.dir
 D:/Code/stonejing-http-server/build/CMakeFiles/ZERO_CHECK.dir
-D:/Code/stonejing-http-server/build/windows/straydog/CMakeFiles/straydog.dir
+D:/Code/stonejing-http-server/build/windows/src/CMakeFiles/straydog.dir
+D:/Code/stonejing-http-server/build/windows/test/CMakeFiles/cmake_test.dir
+D:/Code/stonejing-http-server/build/windows/test/CMakeFiles/log_test.dir
+D:/Code/stonejing-http-server/build/windows/test/CMakeFiles/vector_test.dir
+D:/Code/stonejing-http-server/build/windows/test/CMakeFiles/block_echo_server.dir

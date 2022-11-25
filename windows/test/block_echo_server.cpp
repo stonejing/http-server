@@ -1,6 +1,7 @@
 #include <WinSock2.h>
 #pragma comment(lib, "ws2_32.lib")
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -39,6 +40,7 @@ int main(void)
     SOCKET client_socket;
     int addrlen = sizeof(remoteAddr);
     char recvData[255];
+    std::vector<char> recv_data(1024);
     while(1)
     {
         client_socket = accept(listen_socket, (SOCKADDR*)&remoteAddr, &addrlen);
@@ -47,15 +49,21 @@ int main(void)
             cout << "accept error." << endl;
             continue;
         }
-        cout << "get a new connection: " << inet_ntoa(remoteAddr.sin_addr) << endl;
-        int ret = recv(client_socket, recvData, 255, 0);
+        // cout << "get a new connection: " << inet_ntoa(remoteAddr.sin_addr) << endl;
+        int ret = recv(client_socket, recv_data.data(), 1024, 0);
         if(ret > 0)
         {
-            recvData[ret] = 0x00;
-            printf(recvData);
+            // recvData[ret] = 0x00;
+            // printf(recvData);
+            for(int i = 0; i < ret; i++)
+                std::cout << recv_data[i];
         }
-        char* buff = (char*)"\r\nHello, my friend.\r\n";
-        send(client_socket, buff, strlen(buff), 0);
+        char* buff = (char*)"HTTP/1.1 200 OK\r\nContent-length: 17\r\n\r\nTHIS IS A TEST.\r\n";
+        int s = send(client_socket, buff, strlen(buff), 0);
+        if(s != strlen(buff))
+        {
+            cout << "WSA ERROR: " << WSAGetLastError() << endl;
+        }
         closesocket(client_socket);
     }
     closesocket(listen_socket);
