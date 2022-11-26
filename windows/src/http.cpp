@@ -1,4 +1,5 @@
 #include "http.h"
+#include <WinSock2.h>
 #include <string>
 #include <winsock2.h>
 
@@ -27,9 +28,16 @@ const char* doc_root = "";
     how to determine the impact of compiler as it is more and more intelligent.
 */
 HttpConnection::HttpConnection(SOCKET sockfd)
- : sockfd(sockfd)
+ : sockfd(sockfd), m_read_idx(0)
 {
 
+}
+
+HttpConnection::HttpConnection(SOCKET sockfd, vector<char>& first_buffer, int first_buffer_len)
+ : sockfd(sockfd)
+{
+    read_buffer_ = first_buffer;
+    read_buffer_len_ = first_buffer_len;
 }
 
 HttpConnection::~HttpConnection()
@@ -89,27 +97,8 @@ HttpConnection::LINE_STATUS HttpConnection::ParseLine()
 
 bool HttpConnection::Read()
 {
-    if(m_read_idx >= READ_BUFFER_SIZE)
-        return false;
-    int bytes_read = 0;
-    while(true)
-    {
-        bytes_read = recv(sockfd, m_read_buf + m_read_idx, READ_BUFFER_SIZE - m_read_idx, 0);
-        if(bytes_read == 0)
-        {
-            return false;
-        }
-        else if(bytes_read == SOCKET_ERROR)
-        {
-            if(WSAGetLastError() == WSAEWOULDBLOCK)
-            {
-                LOG_INFO << "handle local WSAEWOULDBLOCK." << "\n";
-                return true;
-            }
-            return false;
-        }
-        m_read_idx += bytes_read;
-    }
+    read_buffer_len_ = recvn(sockfd, read_buffer_);
+    if(read_buffer_len_ == -1) return false;
     return true;
 }
 
@@ -120,19 +109,20 @@ HttpConnection::HTTP_CODE HttpConnection::ParseRequestLine(char* text)
 
 bool HttpConnection::Write()
 {
-    std::string status_line = "HTTP/1.1 200 OK";
-    std::string blank_line = "\r\n";
-    std::string content = "THIS IS A TEST";
-    std::string content_length = "Content-length: " + std::to_string(content.length());
-    std::string result = status_line + blank_line + content_length + blank_line + blank_line+ content;
-    send(sockfd, result.c_str(), (int)result.length(), 0);
+    std::string result = "HTTP/1.1 200 OK\r\nContent-length: 17\r\n\r\nTHIS IS A TEST.\r\n";
+    std::vector<char> http_response(result.begin(), result.end());
+    sendn(sockfd, http_response, static_cast<int>(http_response.size()));
     return true;
 }
 
-void HttpConnection::Process()
+int HttpConnection::Process()
 {
     if(Read())
+    {
         Write();
+        return 1;
+    }
+    return -1;
 }
 
 

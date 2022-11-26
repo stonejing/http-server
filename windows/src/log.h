@@ -22,11 +22,6 @@ public:
         return instance;
     }
 
-    void init()
-    {
-        a_ = 1;
-    }
-
     template<typename T> 
     Log& operator<<(T s)
     {
@@ -34,19 +29,10 @@ public:
         return *this; 
     }
 
-    void PrintNum()
-    {
-        std::cout << "this is a test " << a_ << std::endl;
-        a_++;
-    }
-
 private:
-    Log() : a_(0)
+    Log()
     {
-        std::cout << "contructor called." << std::endl;
     }
-
-    std::atomic<int> a_;
 };
 
 #define LOG_WARN (Log::get_instance() << "\u001b[33m[WARN]\u001b[0m " << __FILE__ << ":" << __LINE__ << " ")

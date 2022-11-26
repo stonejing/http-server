@@ -1,5 +1,4 @@
-#include "straydog.h"
-#include "proxyserver.h"
+#include "server.h"
 
 int main(void)
 {
@@ -11,7 +10,7 @@ int main(void)
     int remote_port = 5000;
     std::string password = "stonejing";
 
-    ProxyServer proxy_server(
+    Server server(
         address,
         remote_port,
         password,
@@ -19,10 +18,10 @@ int main(void)
         11380
     );
 
-    int ret = proxy_server.EventListen();
+    int ret = server.EventListen();
     if(ret == -1) return 1;
 
-    proxy_server.ServerStart();
+    server.ServerStart();
     
     return 1;
 }

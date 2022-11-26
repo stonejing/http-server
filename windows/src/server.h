@@ -22,20 +22,21 @@ using std::make_shared;
 using std::make_unique;
 using std::unordered_map;
 
-class ProxyServer
+class Server
 {
 public:
-    ProxyServer(string& address, int remote_port, 
+    Server(string& address, int remote_port, 
                 string& password, int method,
                 int local_port);
 
-    ~ProxyServer()
+    ~Server()
     {
         closesocket(listen_socket_);
     }
 
     int EventListen();
     int ServerStart();
+    
     int ServerRestart()
     {
         reset_ = 1;
@@ -49,6 +50,7 @@ private:
 
 private:
     SOCKET          listen_socket_;
+    SOCKET          accept_socket_;
     SOCKADDR_IN     local_server_;
 
     string          address_;

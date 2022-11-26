@@ -4,9 +4,9 @@
 include_directories("D:/Program/OpenSSL/include")
 link_directories("D:/Program/OpenSSL/lib/")
 
-set(SRC_LIST main.cpp proxyserver.cpp shadowsocks.cpp crypto.cpp eventloop.cpp http.cpp)
+set(SRC_LIST main.cpp server.cpp shadowsocks.cpp crypto.cpp eventloop.cpp http.cpp utils.cpp)
 
-add_executable(straydog ${SRC_LIST})
+add_executable(server ${SRC_LIST})
 
-target_link_libraries(straydog wsock32 ws2_32)
-target_link_libraries(straydog libssl libcrypto)
+target_link_libraries(server wsock32 ws2_32)
+target_link_libraries(server libssl libcrypto)

@@ -1,12 +1,11 @@
-
 #include <string>
 #include <memory>
 #include <thread>
 
 #include "eventloop.h"
-#include "proxyserver.h"
+#include "server.h"
 
-ProxyServer::ProxyServer(string& address, int remote_port,
+Server::Server(string& address, int remote_port,
                         string& password, int method,
                         int local_port) : 
     address_(address), remote_port_(remote_port),
@@ -19,7 +18,7 @@ ProxyServer::ProxyServer(string& address, int remote_port,
     local_server_.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 }
 
-int ProxyServer::EventListen()
+int Server::EventListen()
 {
     WSADATA wsaData;
     ULONG NonBlock = 1;
@@ -58,14 +57,14 @@ int ProxyServer::EventListen()
 
     // thread_pool_ = make_unique<ThreadPool>(std::thread::hardware_concurrency() - 4,
     //                                         listen_socket_, address_, remote_port_);
-    thread_pool_ = make_unique<ThreadPool>(1, listen_socket_, address_, remote_port_);
+    thread_pool_ = make_unique<ThreadPool>(4, listen_socket_, address_, remote_port_);
 
     LOG_INFO << "server started in 0.0.0.0:" << local_port_ << "\n";
     return 1;
 }
 
 // main thread listen on the port for connections
-int ProxyServer::ServerStart()
+int Server::ServerStart()
 {
     while(true)
     {
@@ -94,32 +93,24 @@ int ProxyServer::ServerStart()
         if(FD_ISSET(listen_socket_, &read_set_))
         {
             auto eventloop = thread_pool_->GetNextThread();
-            if (eventloop)
-            {
-                LOG_INFO << "get accept socket.\n";
-                SOCKET accept_socket = accept(listen_socket_, NULL, NULL);
-                ULONG NonBlock = 1;
-                if(ioctlsocket(accept_socket, FIONBIO, &NonBlock) == SOCKET_ERROR)
-                {
-                    LOG_ERROR << "can not set socket to nonblock" << WSAGetLastError() << "\n";
-                }
-                eventloop->IncreaseAccept(accept_socket);
-            }
+            
+            if(HandleListenSocket() == 1)
+                eventloop->IncreaseAccept(accept_socket_);
         }
     }
 }
 
-int ProxyServer::HandleListenSocket()
+int Server::HandleListenSocket()
 {
-    SOCKET accept_socket_;
     if ((accept_socket_ = accept(listen_socket_, NULL, NULL)) !=
         INVALID_SOCKET) 
     {
-        LOG_INFO << "accept_socket: " << accept_socket_ << "\n";
+        // LOG_INFO << "accept_socket: " << accept_socket_ << "\n";
         ULONG NonBlock = 1;
         if(ioctlsocket(accept_socket_, FIONBIO, &NonBlock) == SOCKET_ERROR)
         {
             LOG_ERROR << "can not set socket to nonblock" << WSAGetLastError() << "\n";
+            return -1;
         }
     } 
     else 

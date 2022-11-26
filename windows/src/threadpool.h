@@ -67,7 +67,6 @@ inline void ThreadPool::StartLoop()
         std::lock_guard<std::mutex> guard(mutex_);
         loops_.push_back(t);
     }
-    LOG_INFO << "thread pool loop start.\n";
     t->Loop();
 }
 

@@ -18,6 +18,7 @@
 
 #include "log.h"
 #include "http.h"
+#include "utils.h"
 
 using std::unordered_map;
 using std::unique_ptr;
@@ -45,7 +46,7 @@ private:
     int HandleListenSocket();
     void HandleAcceptSocket();
 
-    int ReadFirstBuffer();
+    int ReadFirstBuffer(SOCKET sockfd);
 
     unordered_map<SOCKET, unique_ptr<Shadowsocks>> sts_;
     unordered_map<SOCKET, unique_ptr<HttpConnection>> sth_;

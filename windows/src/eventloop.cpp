@@ -1,14 +1,16 @@
 #include "eventloop.h"
 #include <WinSock2.h>
+#include <memory>
 #include <mutex>
 #include <openssl/crypto.h>
+#include <thread>
 #include <winsock2.h>
 
 EventLoop::EventLoop(SOCKET listen_socket, string &address, int remote_port)
     : address_(address), remote_port_(remote_port),
       listen_socket_(listen_socket), quit_(false), first_buffer_len(0),
       first_buffer(std::vector<char>(1024))
-        {}
+{}
 
 EventLoop::~EventLoop() {}
 
@@ -30,13 +32,12 @@ void EventLoop::Loop()
 {
     while (!quit_) 
     {
-        LOG_INFO << "socket_type_ empty: " << socket_type_.empty() << "\n";
         if(socket_type_.empty())
         {
-            LOG_INFO << "socket type is empty.\n";
+            // if socket_type is empty, socket_queue is also empty
+            // just use one socket into select
             std::unique_lock<std::mutex> lk(socket_queue_mutex_);
             socket_variable.wait(lk, [this]{return !socket_queue_.empty();});
-            LOG_INFO << "get socket: " << socket_queue_.front() << "\n";
             socket_type_[socket_queue_.front()] = 3;
             socket_queue_.pop();
             lk.unlock();
@@ -52,8 +53,6 @@ void EventLoop::Loop()
             }
 
             int ret = select(0, &read_set_, &write_set_, NULL, NULL);
-        
-            LOG_INFO << "select get new connection.\n";
 
             if (ret == SOCKET_ERROR)
             {
@@ -64,40 +63,58 @@ void EventLoop::Loop()
             {
                 if(FD_ISSET(it->first, &read_set_))
                 {
-                    // if(ReadFirstBuffer() == -1)
-                    // {
-                    //     socket_type_.erase(it->first);
-                    //     continue;
-                    // }
-                    LOG_INFO << "FD SET socket: " << it->first << "\n";
-                    int ret = recv(it->first, first_buffer.data(), first_buffer.size(), 0);
-                    LOG_INFO << "recv data length: " << ret << "\n"; 
-                    if(ret > 0)
+                    switch(it->second)
                     {
-                        for(int i = 0; i < ret; i++)
+                        case 1:
                         {
-                            std::cout << first_buffer[i];
+                            // shadowsocks handle event
                         }
-                        std::cout << std::endl;
-
-                        char* buff = (char*)"HTTP/1.1 200 OK\r\nContent-length: 17\r\n\r\nTHIS IS A TEST.\r\n";
-                        int s = send(it->first, buff, strlen(buff), 0);
-                        if(s != strlen(buff))
+                        case 2:
                         {
-                            LOG_ERROR << "WSA ERROR: " << WSAGetLastError() << "\n";
+                            if(sth_[it->first]->Read())
+                                sth_[it->first]->Write();
+                            else
+                            {
+                                sth_.erase(it->first);
+                                it = socket_type_.erase(it);
+                                continue;
+                            }
+                            break;
                         }
-                    }
-                    else 
-                    {
-                        closesocket(it->first);
-                        socket_type_.erase(it);
-                        continue;
+                        // dispatch the socket to different class according to first buffer type
+                        // local input only have two types, socks5 and http
+                        case 3:
+                        {
+                            if((first_buffer_len = recvn(it->first, first_buffer)) == -1)
+                            {
+                                closesocket(it->first);
+                                it = socket_type_.erase(it);
+                                continue;
+                            }
+                            if(first_buffer_len > 10)
+                            {
+                                sth_[it->first] = make_unique<HttpConnection>(it->first, first_buffer, first_buffer_len);
+                                sth_[it->first]->Write();
+                                socket_type_[it->first] = 2;
+                            }
+                            else 
+                            {
+                                // sts_[it->first] = make_unique<Shadowsocks>(it->first);
+                                // sts_[it->first]->ShadowsocksHandleLocal();
+                                // shadowsocks handle
+                            }
+                            break;
+                        }
+                        default:
+                            LOG_ERROR << "unknow case occured.\n"; 
+                            abort();
                     }
                 }
                 it++;
             }
 
             {
+                // add accept socket in socket to socket_type
                 std::lock_guard<std::mutex> lk(socket_queue_mutex_);
                 while(!socket_queue_.empty())
                 {
@@ -106,13 +123,6 @@ void EventLoop::Loop()
                 }
             }
         }
-        // FD_ZERO(&read_set_);
-        // FD_ZERO(&write_set_);
-
-        // FD_SET(listen_socket_, &read_set_);
-        // LOG_INFO << "listen socket: " << listen_socket_ << "\n";
-
-        // std::vector<SOCKET> write_;
 
         // for (auto &kv : sts_) 
         // {
@@ -134,31 +144,6 @@ void EventLoop::Loop()
         //     LOG_INFO << "socket: " << kv.first << "\n";
         //     FD_SET(kv.first, &read_set_);
         // }     
-
-        // if(FD_ISSET(listen_socket_, &read_set_))
-        // {
-        //     HandleListenSocket();
-        // }
-
-        // for(auto it = socket_type_.begin(); it != socket_type_.end();)
-        // {
-        //     if(FD_ISSET(it->first, &read_set_))
-        //     {
-        //         if(ReadFirstBuffer() == -1)
-        //         {
-        //             socket_type_.erase(it->first);
-        //             continue;
-        //         }
-
-        //         char* buff = (char*)"HTTP/1.1 200 OK\r\nContent-length: 17\r\n\r\nTHIS IS A TEST.\r\n";
-        //         int s = send(it->first, buff, strlen(buff), 0);
-        //         if(s != strlen(buff))
-        //         {
-        //             LOG_ERROR << "WSA ERROR: " << WSAGetLastError() << "\n";
-        //         }
-        //     }
-        // }
-
 
 
         // for (int i = 0; i < write_.size(); i++) 
@@ -197,63 +182,3 @@ void EventLoop::Loop()
         // }        
     }
 }
-
-// void EventLoop::IncreaseAccept() 
-// {
-//     std::lock_guard<std::mutex> guard(mutex_);
-//     accept_loop_++;
-// }
-
-int EventLoop::ReadFirstBuffer()
-{
-    while(true)
-    {
-        int r = recv(accept_socket_, first_buffer.data() + first_buffer_len, 
-                        1024 - first_buffer_len, 0);
-        LOG_INFO << "recv length: " << r << "\n";
-        if(r == 0)
-        {
-            closesocket(accept_socket_);
-            return -1;
-        }
-        else if(r == SOCKET_ERROR)
-        {
-            if(WSAGetLastError() == WSAEWOULDBLOCK)
-            {
-                LOG_INFO << "e would block." << "\n";
-                return 1;
-            }
-            else
-            {
-                closesocket(accept_socket_);
-                return -1;
-            }
-        }
-        first_buffer_len += r;
-    }
-
-    return 1;
-}
-
-// int EventLoop::HandleListenSocket() {
-//     if ((accept_socket_ = accept(listen_socket_, NULL, NULL)) !=
-//         INVALID_SOCKET) 
-//     {
-//         LOG_INFO << "accept_socket: " << accept_socket_ << "\n";
-//         ULONG NonBlock = 1;
-//         if(ioctlsocket(accept_socket_, FIONBIO, &NonBlock) == SOCKET_ERROR)
-//         {
-//             LOG_ERROR << "can not set socket to nonblock" << WSAGetLastError() << "\n";
-//         }
-//         socket_type_[accept_socket_] = 3;
-//     } 
-//     else 
-//     {
-//         if (WSAGetLastError() != WSAEWOULDBLOCK) 
-//         {
-//             LOG_ERROR << "accept() failed with error" << WSAGetLastError() <<"\n";
-//             return -1;
-//         }
-//     }
-//     return 1;
-// }

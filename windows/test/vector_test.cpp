@@ -3,6 +3,11 @@
 
 using namespace std;
 
+// int t1(vector<int>& test)
+// {
+//     vector
+// }
+
 int main(void)
 {
     std::vector<int> c(1000);

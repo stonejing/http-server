@@ -7,6 +7,9 @@
 #include <string>
 
 #include "log.h"
+#include "utils.h"
+
+using std::vector;
 
 class HttpConnection
 {
@@ -51,12 +54,13 @@ public:
     };
 
     HttpConnection(SOCKET sockfd);
+    HttpConnection(SOCKET sockfd, vector<char>& first_buffer, int first_buffer_len);
     ~HttpConnection();
 
 public:
     void Init(SOCKET sockfd, const sockaddr_in& addr);
     void CloseConnection(bool real_close = true);
-    void Process();
+    int Process();
     bool Read();
     bool Write();
 
@@ -111,4 +115,7 @@ private:
 
     char* m_file_address;
     struct stat m_file_stat;
+
+    vector<char> read_buffer_;
+    int read_buffer_len_;
 };
