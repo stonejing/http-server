@@ -1,7 +1,4 @@
 #include "shadowsocks.h"
-#include <iostream>
-
-using std::cerr;
 
 int Shadowsocks::ShadowsocksSend(SOCKET socket)
 {
@@ -26,6 +23,7 @@ int Shadowsocks::ShadowsocksSend(SOCKET socket)
     }
     send_buffer_idx_ = 0;
     send_buffer_len_ = 0;
+    
     return 1;
 }
 

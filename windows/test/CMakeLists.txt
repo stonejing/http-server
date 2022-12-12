@@ -1,5 +1,5 @@
 
-# add_library(MathFunctions mysqrt.cpp)
+# add_library(MathFunctions mysqrt.cppsaqzzxzxrsrgsrsfzdtgjQ)
 
 # add_executable(mysqrt mysqrt.cpp)
 
@@ -20,9 +20,10 @@ target_link_libraries(cmake_test libssl_static libcrypto_static)
 # add_executable(windivert_test windivert_test.cpp)
 # target_link_libraries(windivert_test WinDivert)
 
-enable_testing()
-add_executable(log_test log_test.cpp)
-add_test(NAME log_test1 COMMAND log_test)
+# enable_testing()
+# add_executable(log_test log_test.cpp)
+# add_test(NAME log_test1 COMMAND log_test)
 
-add_executable(vector_test vector_test.cpp)
-add_executable(block_echo_server block_echo_server.cpp)
+# add_executable(vector_test vector_test.cpp)
+# add_executable(block_echo_server block_echo_server.cpp)
+# add_executable(systray_only WIN32 systray_only.cpp)

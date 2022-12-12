@@ -28,7 +28,7 @@ const char* doc_root = "";
     how to determine the impact of compiler as it is more and more intelligent.
 */
 HttpConnection::HttpConnection(SOCKET sockfd)
- : sockfd(sockfd), m_read_idx(0)
+ : sockfd(sockfd), m_read_idx(0), method_(GET)
 {
 
 }
@@ -50,7 +50,6 @@ void HttpConnection::Init()
     m_check_state = CHECK_STATE_REQUESTLINE;
     m_linger = false;
 
-    m_method = GET;
     m_url = 0;
     m_version = 0;
     m_content_length = 0;
@@ -95,6 +94,9 @@ HttpConnection::LINE_STATUS HttpConnection::ParseLine()
     return LINE_BAD;
 }
 
+// program need to be robust, but it is the later work
+// todo
+// the http request may not complete, handle it
 bool HttpConnection::Read()
 {
     read_buffer_len_ = recvn(sockfd, read_buffer_);
@@ -102,11 +104,17 @@ bool HttpConnection::Read()
     return true;
 }
 
-HttpConnection::HTTP_CODE HttpConnection::ParseRequestLine(char* text)
+HttpConnection::HTTP_CODE HttpConnection::ParseRequestLine(vector<char>& request)
 {
-    return NO_REQUEST;
+    while(true)
+    {
+        
+    }
 }
 
+// write big file may fail
+// fix it? but local do not have big file
+// all need is a network library, laugh cry
 bool HttpConnection::Write()
 {
     std::string result = "HTTP/1.1 200 OK\r\nContent-length: 17\r\n\r\nTHIS IS A TEST.\r\n";
@@ -124,5 +132,3 @@ int HttpConnection::Process()
     }
     return -1;
 }
-
-

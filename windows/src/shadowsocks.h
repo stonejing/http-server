@@ -9,6 +9,7 @@
 
 #include "log.h"
 #include "crypto.h"
+#include "utils.h"
 
 const unsigned char SVERSION            = 0x05;
 const unsigned char METHOD_NOAUTH       = 0x00;

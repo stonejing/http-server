@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_map>
 #include <winsock2.h>
 #include <windows.h>
 
@@ -10,6 +11,8 @@
 #include "utils.h"
 
 using std::vector;
+using std::unordered_map;
+using std::string;
 
 class HttpConnection
 {
@@ -74,7 +77,7 @@ private:
     HTTP_CODE ProcessRead();
     bool ProcessWrite(HTTP_CODE ret);
     // parse http request used in ProcessRead() functionn
-    HTTP_CODE ParseRequestLine(char* text);
+    HTTP_CODE ParseRequestLine(vector<char>& request);
     HTTP_CODE ParseHeaders(char* text);
     HTTP_CODE ParseContent(char* text);
     // store the file to memory address
@@ -83,15 +86,6 @@ private:
     // split http request into lines based on CRLF
     LINE_STATUS ParseLine();
     // used in ProcessWrite() for writing response
-    void unmap();
-    // string operation function
-    bool AddReponse(const char* format, ...);
-    bool AddContent(const char* content);
-    bool AddStatusLine(int status, const char* title);
-    bool AddHeader(int content_length);
-    bool AddContentLength(int content_length);
-    bool AddLinger();
-    bool AddBlankLine();
 
 private:
     SOCKET sockfd;
@@ -104,7 +98,6 @@ private:
     int m_write_idx;
 
     CHECK_STATE m_check_state;
-    METHOD m_method;
 
     char m_file_path[FILENAME_LEN];
     char* m_url;
@@ -118,4 +111,6 @@ private:
 
     vector<char> read_buffer_;
     int read_buffer_len_;
+    std::unordered_map<string, string> http_headers_;
+    METHOD method_;
 };

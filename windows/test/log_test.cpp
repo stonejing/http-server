@@ -9,7 +9,7 @@ void func1()
     for(int i = 0; i < 10; i++)
     {
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        log.PrintNum();
+        // log.PrintNum();
         log << "test";
     }
 }

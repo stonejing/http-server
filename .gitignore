@@ -1,4 +1,5 @@
 *.exe
+*.out
 
 /.vs
 
@@ -6,3 +7,4 @@
 
 /.vscode
 /.cache
+/out

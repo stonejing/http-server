@@ -71,9 +71,14 @@ void EventLoop::Loop()
                         }
                         case 2:
                         {
-                            if(sth_[it->first]->Read())
-                                sth_[it->first]->Write();
-                            else
+                            int ret = sth_[it->first]->Process();
+                            if(ret == 0)
+                            {
+                                LOG_INFO << "http write block" << "\n";
+                                // set the current socket to write set queue
+                            }
+                            // some error happened
+                            else if(ret == -1)
                             {
                                 sth_.erase(it->first);
                                 it = socket_type_.erase(it);
@@ -85,12 +90,14 @@ void EventLoop::Loop()
                         // local input only have two types, socks5 and http
                         case 3:
                         {
+                            // select have read event happened, when will it occure
                             if((first_buffer_len = recvn(it->first, first_buffer)) == -1)
                             {
                                 closesocket(it->first);
                                 it = socket_type_.erase(it);
                                 continue;
                             }
+                            
                             if(first_buffer_len > 10)
                             {
                                 sth_[it->first] = make_unique<HttpConnection>(it->first, first_buffer, first_buffer_len);
