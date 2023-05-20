@@ -1,4 +1,0 @@
-D:/Code/stonejing-http-server/build/CMakeFiles/ALL_BUILD.dir
-D:/Code/stonejing-http-server/build/CMakeFiles/ZERO_CHECK.dir
-D:/Code/stonejing-http-server/build/windows/src/CMakeFiles/server.dir
-D:/Code/stonejing-http-server/build/windows/test/CMakeFiles/cmake_test.dir

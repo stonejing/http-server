@@ -1,6 +1,5 @@
-# webserver 开发
+# DOC
 
-reactor 模式，半同步半异步，每个线程维持自己的事件循环
-http parser 使用状态机解析
-线程池实现
-异步 LOG
+## TEST
+start webserver in the Linux using ./webserver command, and input localhost:2345/index.html, if is shows "test", then it proved the webserver can work.
+
