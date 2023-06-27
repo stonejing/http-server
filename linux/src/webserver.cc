@@ -37,11 +37,11 @@ void WebServer::EventListen()
     assert(ret != -1);
     ret = listen(listen_fd_, 5);
     assert(ret != -1);
+    log_info("webserver start: %s: %d", "localhost: ", 2345);
 }
 
 void WebServer::Start()
 {
-    log_info("webserver start.");
     std::shared_ptr<Channel> accept_channel_(new Channel(loop_, listen_fd_));
     accept_channel_->set_events(EPOLLIN);
     accept_channel_->set_read_callback(std::bind(&WebServer::HandleNewConnection, this));

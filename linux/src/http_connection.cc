@@ -1,4 +1,4 @@
-#include "http_conn.h"
+#include "http_connection.h"
 #include "dbg.h"
 
 /* 定义 HTTP 响应的一些状态信息 */
@@ -12,9 +12,19 @@ const char* error_404_form = "The request file was not found on this server.\n";
 const char* error_500_title = "Internal Error";
 const char* error_500_form = "There was an unusual problem serving the reqeustted file.\n";
 /* 网站的根目录 */
-const char* doc_root = "./resource";
+const char* doc_root = "../../resource";
 
-void http_conn::init()
+HttpConnection::HttpConnection(EventLoop* event_loop, int connfd)
+    : channel_(new Channel(event_loop, connfd)), m_sockfd(connfd),
+        loop_(event_loop)
+{
+    init();
+    channel_->set_events(EPOLLIN);
+    channel_->set_read_callback(std::bind(&HttpConnection::HandleRead, this));
+    channel_->set_write_callback(std::bind(&HttpConnection::HandleWrite, this));
+}
+
+void HttpConnection::init()
 {
     m_check_state = CHECK_STATE_REQUESTLINE;
     m_linger = false;
@@ -35,8 +45,6 @@ void http_conn::init()
     memset(m_read_buf, 0, READ_BUFFER_SIZE);
     memset(m_write_buf, 0, WRITE_BUFFER_SIZE);
     memset(m_read_file, 0, FILENAME_LEN);
-
-    
 }
 
 /* 
@@ -45,7 +53,7 @@ void http_conn::init()
     而且，这样不就遍历了两遍么，效率减少了
     正则也不行，过去笨重，也是用状态机来的
  */
-http_conn::LINE_STATUS http_conn::parse_line()
+HttpConnection::LINE_STATUS HttpConnection::ParseLine()
 {
     char temp;
     for(; m_checked_idx < m_read_idx; ++m_checked_idx)
@@ -92,14 +100,14 @@ http_conn::LINE_STATUS http_conn::parse_line()
     分析 HTTP 请求的入口函数，HTTP 的解析是按照 行 进行
     这个可以算是一个 状态机 
 */
-http_conn::HTTP_CODE http_conn::process_read()
+HttpConnection::HTTP_CODE HttpConnection::ProcessRead()
 {
     LINE_STATUS line_status = LINE_OK;  /* 记录当前行的读取状态 */
     HTTP_CODE ret = NO_REQUEST;         /* 当前 HTTP 请求处理结果 */
     char* text = 0;
     
     while(((m_check_state == CHECK_STATE_CONTENT) && (line_status == LINE_OK)) 
-                || ((line_status = parse_line()) == LINE_OK))
+                || ((line_status = ParseLine()) == LINE_OK))
     {
         text = get_line();
         m_start_line = m_checked_idx;
@@ -110,7 +118,7 @@ http_conn::HTTP_CODE http_conn::process_read()
             /* 分析请求行 */
             case CHECK_STATE_REQUESTLINE:
             {
-                ret = parse_request_line(text);
+                ret = ParseRequestLine(text);
                 if(ret == BAD_REQUEST)
                 {
                     log_err("BAD REQUEST.");
@@ -121,7 +129,7 @@ http_conn::HTTP_CODE http_conn::process_read()
             /* 分析头部字段 */
             case CHECK_STATE_HEADER:
             {
-                ret = parse_headers(text);
+                ret = ParseHeaders(text);
                 if(ret == BAD_REQUEST)
                 {
                     log_err("BAD REQUEST.");
@@ -130,18 +138,18 @@ http_conn::HTTP_CODE http_conn::process_read()
                 else if(ret == GET_REQUEST)
                 {
                     log_info("GET REQUEST. DO REQUEST.");
-                    return do_request();
+                    return DoRequest();
                 }
                 break;
             }
             /* 分析内容段 */
             case CHECK_STATE_CONTENT:
             {
-                ret = parse_content(text);
+                ret = ParseContent(text);
                 if(ret == GET_REQUEST)
                 {
                     log_info("GET REQUEST. DO REQUEST.");
-                    return do_request();
+                    return DoRequest();
                 }
                 line_status = LINE_OPEN;
                 break;
@@ -156,7 +164,7 @@ http_conn::HTTP_CODE http_conn::process_read()
 }
 
 /* 解析 HTTP 请求行，获得请求方法，目标URL，HTTP 版本号 */
-http_conn::HTTP_CODE http_conn::parse_request_line(char* text)
+HttpConnection::HTTP_CODE HttpConnection::ParseRequestLine(char* text)
 {
     log_info("parse request line.");
     m_url = strpbrk(text, " \t");
@@ -206,7 +214,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char* text)
     return NO_REQUEST;
 }
 
-http_conn::HTTP_CODE http_conn::parse_headers(char* text)
+HttpConnection::HTTP_CODE HttpConnection::ParseHeaders(char* text)
 {
     if(text[0] == '\0')
     {
@@ -240,13 +248,13 @@ http_conn::HTTP_CODE http_conn::parse_headers(char* text)
     }
     else
     {
-        log_info("oops! unknown header %s.", text);
+        log_info("oops! unknown header.");
         return NO_REQUEST;
     }
     return NO_REQUEST;
 }
 
-http_conn::HTTP_CODE http_conn::parse_content(char* text)
+HttpConnection::HTTP_CODE HttpConnection::ParseContent(char* text)
 {
     if(m_read_idx >= (m_content_length + m_checked_idx))
     {
@@ -257,7 +265,7 @@ http_conn::HTTP_CODE http_conn::parse_content(char* text)
     return NO_REQUEST;
 }
 
-http_conn::HTTP_CODE http_conn::do_request()
+HttpConnection::HTTP_CODE HttpConnection::DoRequest()
 {
     strcpy(m_read_file, doc_root);
     int len = strlen(doc_root);
@@ -286,7 +294,7 @@ http_conn::HTTP_CODE http_conn::do_request()
     return FILE_REQUEST;
 }
 
-void http_conn::unmap()
+void HttpConnection::unmap()
 {
     if(m_file_address)
     {
@@ -295,7 +303,7 @@ void http_conn::unmap()
     }
 }
 
-bool http_conn::add_response(const char* format, ...)
+bool HttpConnection::AddResponse(const char* format, ...)
 {
     if(m_write_idx >= WRITE_BUFFER_SIZE)
     {
@@ -315,48 +323,73 @@ bool http_conn::add_response(const char* format, ...)
     return true;
 }
 
-bool http_conn::add_status_line(int status, const char* title)
+bool HttpConnection::AddStatusLine(int status, const char* title)
 {
-    return add_response("%s %d %s\r\n", "HTTP/1.1", status, title);
+    return AddResponse("%s %d %s\r\n", "HTTP/1.1", status, title);
 }
 
-bool http_conn::add_headers(int content_len)
+bool HttpConnection::AddHeaders(int content_len)
 {
-    add_content_length(content_len);
-    add_linger();
-    add_blank_line();
+    AddContentLength(content_len);
+    AddLinger();
+    AddBlankLine();
     return true;
 }
 
-bool http_conn::add_content_length(int content_len)
+bool HttpConnection::AddContentLength(int content_len)
 {
-    return add_response("Content-Length: %d\r\n", content_len);
+    return AddResponse("Content-Length: %d\r\n", content_len);
 }
 
-bool http_conn::add_linger()
+bool HttpConnection::AddLinger()
 {
-    return add_response("Connection: %s\r\n", (m_linger == true) ? "keep-alive" : "close");
+    return AddResponse("Connection: %s\r\n", (m_linger == true) ? "keep-alive" : "close");
 }
 
-bool http_conn::add_blank_line()
+bool HttpConnection::AddBlankLine()
 {
-    return add_response("%s", "\r\n");
+    return AddResponse("%s", "\r\n");
 }
 
-bool http_conn::add_content(const char* content)
+bool HttpConnection::AddContent(const char* content)
 {
-    return add_response("%s", content);
+    return AddResponse("%s", content);
 }
 
-bool http_conn::process_write(HTTP_CODE ret)
+void HttpConnection::HandleWrite()
+{
+    if(write())
+    {
+        // channel_->set_events(EPOLLOUT);
+        // loop_->UpdatePoller(channel_);
+        return;
+    }
+    else
+    {
+        // loop_->RemovePoller(channel_);
+        // close(m_sockfd);
+        // log_info("close sockfd: %d", m_sockfd);
+        channel_->set_events(EPOLLIN);
+        loop_->UpdatePoller(channel_);
+        return;
+    }
+}
+
+void HttpConnection::HandleRead()
+{
+    log_info("read event. fd: %d", m_sockfd); 
+    process();    
+}
+
+bool HttpConnection::ProcessWrite(HTTP_CODE ret)
 {
     switch(ret)
     {
         case INTERNAL_ERROR:
         {
-            add_status_line(500, error_500_title);
-            add_headers(strlen(error_500_form));
-            if(!add_content(error_500_form))
+            AddStatusLine(500, error_500_title);
+            AddHeaders(strlen(error_500_form));
+            if(!AddContent(error_500_form))
             {
                 return false;
             }
@@ -364,9 +397,9 @@ bool http_conn::process_write(HTTP_CODE ret)
         }
         case BAD_REQUEST:
         {
-            add_status_line(400, error_400_title);
-            add_headers(strlen(error_400_from) - 1);
-            if(!add_content(error_400_from))
+            AddStatusLine(400, error_400_title);
+            AddHeaders(strlen(error_400_from) - 1);
+            if(!AddContent(error_400_from))
             {
                 return false;
             }
@@ -375,9 +408,9 @@ bool http_conn::process_write(HTTP_CODE ret)
         case NO_RESOURCE:
         {
             log_info("NO RESOURCE RESPONSE.");
-            add_status_line(404, error_404_title);
-            add_headers(strlen(error_404_form) - 1);
-            if(!add_content(error_404_form))
+            AddStatusLine(404, error_404_title);
+            AddHeaders(strlen(error_404_form) - 1);
+            if(!AddContent(error_404_form))
             {
                 return false;
             }
@@ -385,9 +418,9 @@ bool http_conn::process_write(HTTP_CODE ret)
         }
         case FORBIDDEN_REQUEST:
         {
-            add_status_line(403, error_403_title);
-            add_headers(strlen(error_403_form));
-            if(!add_content(error_403_form))
+            AddStatusLine(403, error_403_title);
+            AddHeaders(strlen(error_403_form));
+            if(!AddContent(error_403_form))
             {
                 return false;
             }
@@ -396,10 +429,10 @@ bool http_conn::process_write(HTTP_CODE ret)
         case FILE_REQUEST:
         {
             log_info("FILE REQUEST WRITE.");
-            add_status_line(200, ok_200_title);
+            AddStatusLine(200, ok_200_title);
             if(m_file_stat.st_size != 0)
             {
-                add_headers(m_file_stat.st_size);
+                AddHeaders(m_file_stat.st_size);
                 m_iv[0].iov_base = m_write_buf;
                 m_iv[0].iov_len = m_write_idx;
                 m_iv[1].iov_base = m_file_address;
@@ -412,10 +445,10 @@ bool http_conn::process_write(HTTP_CODE ret)
             }
             else
             {
-                add_status_line(200, ok_200_title);
+                AddStatusLine(200, ok_200_title);
                 const char* ok_string = "<html><body>HELLO</body></html>";
-                add_headers(strlen(ok_string));
-                if(!add_content(ok_string))
+                AddHeaders(strlen(ok_string));
+                if(!AddContent(ok_string))
                 {
                     return false;
                 }
@@ -434,25 +467,33 @@ bool http_conn::process_write(HTTP_CODE ret)
     return true;
 }
 
-void http_conn::process()
+void HttpConnection::process()
 {
-    HTTP_CODE read_ret = process_read();
+    if(!read())
+    {
+        loop_->RemovePoller(channel_);
+        close(m_sockfd);
+        log_info("close sockfd: %d", m_sockfd);
+        return;
+    }
+    HTTP_CODE read_ret = ProcessRead();
     if(read_ret == NO_REQUEST)
     {
         // modfd(m_epollfd, m_sockfd, EPOLLIN);
+        channel_->set_events(EPOLLIN);
+        loop_->UpdatePoller(channel_);    
         return;
     }
-    bool write_ret = process_write(read_ret);
-    // if(!write_ret)
-    // {
-    //     close_conn();
-    // }
+    bool write_ret = ProcessWrite(read_ret);
+
+    channel_->set_events(EPOLLOUT);
+    loop_->UpdatePoller(channel_);
 
     // modfd(m_epollfd, m_sockfd, EPOLLOUT);
 }
 
 /* 循环读取客户数据，直到无数据可读或对方关闭连接 */
-bool http_conn::read()
+bool HttpConnection::read()
 {
     if(m_read_idx >= READ_BUFFER_SIZE)
     {
@@ -461,6 +502,7 @@ bool http_conn::read()
     int bytes_read = 0;
     // log_info("read bytes from socket.");
     /* 将 HTTP 请求全部读入，存到 m_read_buf char数组中*/
+    log_info("recv data from: %d", m_sockfd);
     while(true)
     {
         bytes_read = recv(m_sockfd, m_read_buf + m_read_idx, READ_BUFFER_SIZE - m_read_idx, 0);
@@ -474,28 +516,24 @@ bool http_conn::read()
         }
         else if(bytes_read == 0)
         {
+            log_err("read zero byte.");
             return false;
         }
         m_read_idx += bytes_read;
     }
-    // log_info("read completed. %d", m_read_idx);
-    // for(int i = 0; i < m_read_idx; i++)
-    // {
-    //     log_info("%02x ", (unsigned char)m_read_buf[i]);
-    // }
-    // m_read_idx = 0;
     return true;
 }
 
-bool http_conn::write()
+bool HttpConnection::write()
 {
     int temp = 0;
 
+    log_info("http write function. %d", m_sockfd);
     if(bytes_to_send == 0)
     {
         // modfd(m_epollfd, m_sockfd, EPOLLIN);
         init();
-        return true;
+        return false;
     }
     /*
         这个 while 只能将缓冲区写满，写满之后，就是阻塞 failure
@@ -509,7 +547,6 @@ bool http_conn::write()
         // temp = send(m_sockfd, (char*)&response, sizeof(response), 0);
         if(temp <= -1)
         {
-            printf("write failure.\n");
             if(errno == EAGAIN)
             {
                 // printf("change mode.\n");
@@ -518,7 +555,7 @@ bool http_conn::write()
                     可以会变成 EPOLLIN，这个可能才是默认的
                 */
                 // modfd(m_epollfd, m_sockfd, EPOLLOUT);
-                printf("errno EAGAIN.\n");
+                log_err("errno EAGAIN.");
                 return true;
             }
             log_info("error: %d", errno);
@@ -527,8 +564,6 @@ bool http_conn::write()
         }        
         bytes_to_send -= temp;
         bytes_have_send += temp;
-        log_info("bytes have send: %d", bytes_have_send);
-        log_info("bytes to send: %d", bytes_to_send);
         if(bytes_have_send >= m_iv[0].iov_len)
         {
             m_iv[0].iov_len = 0;
@@ -544,8 +579,6 @@ bool http_conn::write()
         if(bytes_to_send <= 0)
         {
             unmap();
-            log_info("change epoll event to EPOLLIN.");
-            // modfd(m_epollfd, m_sockfd, EPOLLIN);
             if(m_linger)
             {
                 init();

@@ -1,13 +1,22 @@
-#pragma
+#pragma once
 
-#include "http_conn.h"
-// #include "timer_lst.h"
-#include "timer_wheel.h"
 #include "dbg.h"
-#include "epoll_event.h"
-// #include "timer_min_heap.h"
 #include "utils.h"
+#include "thread_pool.h"
+#include "event_loop.h"
+#include <unistd.h>
 #include <memory>
+#include <functional>
+#include <string>
+#include <vector>
+#include <string>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <assert.h>
+#include "http_connection.h"
+#include <map>
+#include <sys/epoll.h>
 
 const int MAX_FD = 65536;
 const int MAX_EVENT_NUMBER = 10000;
@@ -15,47 +24,22 @@ const int TIMESLOT = 2;
 const int TCP_BUFFER_SIZE = 512;
 const int UDP_BUFFER_SZIE = 1024;
 
-struct ClientData
-{
-    http_conn* http_connection;
-    TimeWheelTimer* timer;
-};
-
 class WebServer
 {
+private:
+    std::string root_path_;
+    int listen_fd_;
+    std::unique_ptr<ThreadPool> thread_pool_;
+    EventLoop* loop_;
+    std::shared_ptr<Channel> accept_channel_;
+    std::map<int, std::shared_ptr<HttpConnection>> requests_;
 
 public:
-    char* m_root;
+    WebServer(EventLoop* loop);
+    ~WebServer() {}   
 
-    ClientData* client_data;
+    void EventListen();
+    void Start();
 
-    int m_listenfd;
-
-    epoll_event events[MAX_EVENT_NUMBER];
-
-    EpollEvent epoll;
-    // SignalHandler signal_handler;
-    TimeWheel tw = TimeWheel(60000);
-
-public:
-    WebServer();
-    ~WebServer(){};
-
-    void event_listen();
-    void event_loop();
-
-    bool accept_client();
-
-    bool deal_signal(bool& time_out, bool& stop_server);
-    void deal_read(int sockfd);
-    void deal_write(int sockfd);
-
-    void CallbackFunction(void* http_connection)
-    {
-        http_conn* temp = (http_conn*)http_connection;
-        epoll_ctl(epoll.GetEpollfd(), EPOLL_CTL_DEL, temp->get_sockfd(), 0);
-        assert(http_connection);
-        close(temp->get_sockfd());
-        printf("Callback, close socket.\n");
-    }
+    void HandleNewConnection();
 };
