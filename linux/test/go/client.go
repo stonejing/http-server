@@ -37,7 +37,7 @@ func send(i int, c chan int) {
 func main() {
 	fmt.Println("client: 127.0.0.1:8000")
 	ch := make(chan int)
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 50; i++ {
 		go send(i, ch)
 	}
 	fmt.Println(<- ch)

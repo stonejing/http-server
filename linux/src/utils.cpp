@@ -4,7 +4,7 @@
 #include <strings.h>
 #include <sys/socket.h>
 
-int socket_bind_listen(int port)
+int socket_bind_listen_tcp_v4(int port)
 {
     if(port < 0 || port > 65535)
         return -1;
@@ -16,15 +16,14 @@ int socket_bind_listen(int port)
     reusesocket(listen_fd);
     
     struct sockaddr_in server_addr;
-    bzero((char*)&server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons((unsigned short)port);
-
-    if(bind(listen_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1)
+    int ret;
+    if((ret = bind(listen_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1))
         return -1;
 
-    if(listen(listen_fd, 2048) == -1)
+    if(listen(listen_fd, 5) == -1)
         return -1;
     
     if(listen_fd == -1)
