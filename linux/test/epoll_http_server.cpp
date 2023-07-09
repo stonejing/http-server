@@ -19,7 +19,7 @@
 #include <errno.h>
 #include <string>
 #include "socks5.h"
-#include "dbg.hpp"
+#include "dbg.h"
 
 #define MAX_EVENTS 10
 #define PORT 2344
