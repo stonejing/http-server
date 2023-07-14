@@ -13,10 +13,13 @@ public:
     threadsafe_queue() {}
     ~threadsafe_queue() {}
 
-    void push(T new_value)
+    template<typename... Args>
+    void push(string level, string file_name, int file_line, string error_message, Args&&... args)
     {
         std::lock_guard<std::mutex> lock(mut);
-        data_queue.push(std::move(new_value));
+        string buff = "[" + level + "]" + " " + file_name + ":" + to_string(file_line) + " " + error_message;
+        cout << buff << " " << endl;
+        data_queue.push(std::move(buff));
         data_cond.notify_one();
     }
       
@@ -64,15 +67,18 @@ public:
     }
 
 private:
-    queue<T> data_queue;
+    queue<string> data_queue;
     mutex mut;
     condition_variable data_cond;
 };
 
+threadsafe_queue<int> q;
+
+#define log_info(M, ...) q.push("INFO", __FILE__, __LINE__, M, ##__VA_ARGS__);
 
 
 int main(void)
 {
-
+    log_info("error in:", 2);
     return 0;
 }

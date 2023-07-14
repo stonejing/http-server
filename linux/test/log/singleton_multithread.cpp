@@ -1,6 +1,7 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
+#include <queue>
 
 class Singleton
 {
@@ -49,22 +50,7 @@ void print_c(char c)
 
 int main(void)
 {
-    // std::thread a(&bar::foo, bar(), 3);
     std::thread t[10];
-    // for(int i = 0; i < 10; i++)
-    // {
-    //     t[i] = std::thread(print_c, 'v');
-    // }
-
-    // for (int i = 0; i < 10; i++) 
-    // {
-    //     t[i].join();
-    // }
-
-    // Singleton& a1 = Singleton::getInstance();
-    // a1.print();
-    // Singleton& a2 = Singleton::getInstance();
-    // a2.print();
 
     for(int i = 0; i < 10; i++)
     {

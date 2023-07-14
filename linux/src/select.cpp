@@ -1,8 +1,10 @@
-#include "utils.h"
 #include <cstring>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <iostream>
+
+#include "utils.h"
+#include "select.h"
 
 int main(void)
 {
@@ -21,18 +23,17 @@ int main(void)
     FD_ZERO(&read_fd);
     FD_ZERO(&read_tmp);
     FD_ZERO(&exception_fd);
-
     FD_SET(listen_fd, &read_fd);
+    log_info("START SELECT SERVER: 127.0.0.1:8000, listen fd: %d", listen_fd);
+    log_info("max fd: %d\n", maxfd);
 
-    printf("START SELECT SERVER: 127.0.0.1:8000, listen fd: %d\n", listen_fd);
-    std::cout << maxfd << std::endl;
     while(1)
     {
         read_tmp = read_fd;
         int ret = select(maxfd + 1, &read_tmp, NULL, NULL, NULL);
         if(ret < 0)
         {
-            printf("selection failure.\n");
+            log_err("select failutre.");
             break;
         }
         if(FD_ISSET(listen_fd, &read_tmp))

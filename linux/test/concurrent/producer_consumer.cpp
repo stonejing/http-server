@@ -59,6 +59,8 @@ void printletter(const std::string& letter, bool isA)
     }
 }
 
+
+
 int main(void)
 {
     std::thread producer_thread(producer);
