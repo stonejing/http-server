@@ -1,5 +1,6 @@
 #pragma once
 
+#include <csignal>
 #include <errno.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -12,6 +13,9 @@
 #include <assert.h>
 #include <string>
 #include <iostream>
+#include <signal.h>
+
+#include "log.h"
 
 inline int create_tcp_v4_listen_socket()
 {
@@ -80,7 +84,6 @@ inline int nonblock_write(int fd, void* buff, size_t n)
     return 0;
 }
 
-
 inline int setnonblocking(int fd)
 {
     int old_option = fcntl(fd, F_GETFL);
@@ -107,4 +110,13 @@ inline void setsocketnolinger(int fd)
     linger_.l_onoff = 1;
     linger_.l_linger = 30;
     setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char*)&linger_, sizeof(linger_));
+}
+
+inline void handle_for_sigpipe()
+{
+    struct sigaction sa;
+    sa.sa_handler = SIG_IGN;
+    sa.sa_flags = 0;
+    if(sigaction(SIGPIPE, &sa, NULL)) 
+        return;
 }

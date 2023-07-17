@@ -14,18 +14,21 @@
 
 using namespace std;
 
-// #define CONSOLE
+#define CONSOLE
+class CLogger;
 
 #define LOG_INFO(msg, ...) Log.log_info(__FILE__, __LINE__, msg, ##__VA_ARGS__)
 #define LOG_WARN(msg, ...) Log.log_warn(__FILE__, __LINE__, msg, ##__VA_ARGS__)
 #define LOG_ERR(msg, ...) Log.log_err(__FILE__, __LINE__, msg, ##__VA_ARGS__)
 
+// synchronized LOG, the same function for input and output
+
 class CLogger
 {
 private:
-    CLogger(const string& file_name)  
+    CLogger()  
     {
-        log_file.open(file_name);
+
     }
     ~CLogger()
     {
@@ -67,9 +70,9 @@ private:
     int thread_safe_test = 0;
 
 public:
-    static CLogger& getInstance(const string& file_name)
+    static CLogger& getInstance()
     {
-        static CLogger instance(file_name);
+        static CLogger instance;
         return instance;
     }
 
@@ -95,9 +98,11 @@ public:
             int offset = std::snprintf(buffer, sizeof(buffer), "[INFO] (%s:%d) ", file_name, file_line);
             offset += get_time_stamp_cpp(buffer + offset);
             offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
-            if (offset >= 0 && offset < sizeof(buffer)) {
+            if (offset >= 0 && offset < sizeof(buffer)) 
+            {
                 std::snprintf(buffer + offset, sizeof(buffer) - offset, format, args...);
             }
+            std::unique_lock<std::mutex> lock(mut);
             log_file << buffer << "\n";
         #endif
         lock.unlock();

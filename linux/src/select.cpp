@@ -1,4 +1,4 @@
-#include <cstring>
+#include <string>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <iostream>

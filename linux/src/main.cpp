@@ -1,41 +1,29 @@
-#include "log.h"
 #include <chrono>
-#include <ratio>
-#include <thread>
-#include <random>
+#include <string>
+#include <memory>
+#include "assert.h"
 
-// CLogger& log = CLogger::getInstance();
+#include "log.h"
+#include "webserver.h"
 
-void thread_t()
-{
-    CLogger& Log = CLogger::getInstance("log2.txt");
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dist(0, 1000);
+#include "threadpool.h"
 
-    int sleep_duration = dist(gen);
-
-    for(int i = 0; i < 2; i++)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_duration));
-        LOG_INFO("%s, TEST %d", "stonejing", i);
-        LOG_WARN("%s, TEST %d", "stonejing", i);
-        LOG_ERR("%s, TEST %d", "stonejing", i);
-    }
-}
+using std::string;
 
 int main(void)
 {
-    thread t[10];
-    for(int i = 0; i < 10; i++)
-    {
-        t[i] = thread(thread_t);
-    }
+    int thread_num = 8;
+    int port = 80;
 
-    for(int i = 0; i < 10; i++)
-    {
-        t[i].join();
-    }
+    string log_path = "./webserver.log";
+
+    CLogger& Log = CLogger::getInstance();
+    Log.init(log_path);
+
+    LOG_INFO("main start server");
+
+    Webserver server(8, 8000);
+    server.serverAcceptStart();
 
     return 0;
 }

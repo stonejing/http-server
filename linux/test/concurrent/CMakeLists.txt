@@ -12,3 +12,9 @@ add_executable(condition_variable condition_variable.cpp)
 target_link_libraries(condition_variable PUBLIC "-pthread")
 
 add_executable(fork_test fork_test.cpp)
+
+add_executable(thread_pool_test thread_pool_test.cc)
+target_link_libraries(thread_pool_test PUBLIC "-pthread")
+
+add_executable(member_function memer_function.cpp)
+target_link_libraries(member_function PUBLIC "-pthread")
