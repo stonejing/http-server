@@ -49,7 +49,7 @@ public:
 
     bool threadPoolStatus()
     {
-        cout << "GET something" << endl;
+        LOG_INFO("get threadpool status");
         if(status) return true;
         while(!status)
         {
@@ -59,7 +59,6 @@ public:
                 return true;
             }
             std::this_thread::sleep_for(std::chrono::microseconds(100));
-            cout << "eventloop size: " << eventloop_size << endl;
         }
         return false;
     }

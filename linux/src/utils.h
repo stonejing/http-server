@@ -9,6 +9,7 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/epoll.h>
 #include <unistd.h>
 #include <assert.h>
 #include <string>
@@ -119,4 +120,26 @@ inline void handle_for_sigpipe()
     sa.sa_flags = 0;
     if(sigaction(SIGPIPE, &sa, NULL)) 
         return;
+}
+
+inline void epollAddFd(int epollfd, int fd)
+{
+    epoll_event event;
+    event.data.fd = fd;
+    event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
+    epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event);
+}
+
+inline void epollModFd(int epollfd, int fd, int ev)
+{
+    epoll_event event;
+    event.data.fd = fd;
+    event.events = ev | EPOLLRDHUP;
+    epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event);
+}
+
+inline void epollDelFd(int epollfd, int fd)
+{
+    epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, 0);
+    close(fd);
 }

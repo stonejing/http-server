@@ -1,23 +1,21 @@
 #include "eventloop.h"
+#include <sys/epoll.h>
+#include <sys/eventfd.h>
 #include <thread>
 
 void EventLoop::loop()
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(1, 5);  // Random duration between 1 and 5 seconds
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    // std::random_device rd;
+    // std::mt19937 gen(rd());
+    // std::uniform_int_distribution<int> dist(1, 5);  // Random duration between 1 and 5 seconds
+    // std::this_thread::sleep_for(std::chrono::seconds(3));
     CLogger& Log = CLogger::getInstance();          // class 创建完成，但是内部成员可能没有初始化完成
+    epollAddFd(epollfd, evfd);
     LOG_INFO("loop function start");
-    epoll_event events[MAX_EVENT_NUMBER];
     while(1)
     {
-        // int duration = dist(gen);
-        // std::this_thread::sleep_for(std::chrono::seconds(3));
-        // LOG_INFO("duration: %d get epollfd", duration);
-
+        LOG_INFO("epoll_wait once.");
         int number = epoll_wait(epollfd, events, MAX_EVENT_NUMBER, -1);
-        LOG_INFO("EPOLL WAIT.");
         if((number < 0 ) && (errno != EINTR))
         {
             LOG_ERR("epoll failure.");
@@ -27,25 +25,16 @@ void EventLoop::loop()
         for(int i = 0; i < number; i++)
         {
             int sockfd = events[i].data.fd;
-            if(events[i].events & EPOLLIN)
+            if(sockfd == evfd)
             {
-                handleRead(sockfd);
-            }
-            else if(events[i].data.fd == evfd)
-            {
+                eventfd_t value;
+                eventfd_read(evfd, &value);
                 handleSocketQueue();
-            }
-            else if(events[i].events & EPOLLOUT)
-            {
-                handleWrite(sockfd);
-            }
-            else if(events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
-            {
-                LOG_INFO("close %d connection.", sockfd);
             }
             else 
             {
-                LOG_ERR("epoll unseen event failure.");
+                LOG_INFO("event handle epoll event.");
+                socket_http_map[sockfd]->get_channel()->handleEvent();
             }
         }
     } 
