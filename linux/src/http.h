@@ -38,5 +38,5 @@ private:
     int write_idx;
     static const int buffer_size = 1024;
 
-   CLogger& Log = CLogger::getInstance();
+    CLogger& Log = CLogger::getInstance();
 };

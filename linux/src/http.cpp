@@ -28,9 +28,12 @@ void Http::handleRead()
     {
         channel->set_event(EPOLLOUT);
         // process buffer
-        // std::string s(buffer.begin(), buffer.begin() + read_idx);
-        // LOG_INFO("%s", s);
-        LOG_INFO("read len: %d", read_idx);
+        cout << buffer.size() << endl;
+        std::string s(buffer.begin(), buffer.end());
+        for(int i = 0; i < read_idx; i++)
+        {
+            cout << buffer[i];
+        }
     }
     else 
     {

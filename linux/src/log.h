@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdio>
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <queue>
@@ -48,6 +50,9 @@ private:
         gettimeofday(&tv, nullptr);
         time_t currTime = tv.tv_sec;
         struct tm* timeinfo = localtime(&currTime);
+        // int microsecond = tv.tv_usec;
+        // int length = std::strftime(buffer, 27, "%Y-%m-%d %H:%M:%S", timeinfo);
+        // snprintf(buffer + length, 7, ".%06d", microsecond);
         return std::strftime(buffer, 20, "%Y-%m-%d %H:%M:%S", timeinfo);
     }
 
@@ -85,7 +90,7 @@ public:
     void log_info(const char* file_name, int file_line, const char* format, Args... args)
     {
         std::unique_lock<std::mutex> lock(mut);
-        char buffer[256];
+        char buffer[1024];
         #ifdef CONSOLE
             int offset = std::snprintf(buffer, sizeof(buffer), "\033[32;1m[INFO]\033[0m\033[34m(%s:%d)\033[0m ", file_name, file_line);
             offset += get_time_stamp_c(buffer + offset);
