@@ -92,7 +92,7 @@ int main() {
                 }
             } else {
                 // Handle client socket events
-                std::cout << "handle listen envent." << std::endl;
+                std::cout << "handle listen envent: " << events[i].data.fd << std::endl;
                 int clientSocket = events[i].data.fd;
                 char buffer[MAX_BUFFER_SIZE];
                 ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);

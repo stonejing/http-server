@@ -30,7 +30,7 @@ class EventLoop
 public:
     EventLoop() : epollfd(epoll_create1(EPOLL_CLOEXEC)), evfd(eventfd(0, EFD_NONBLOCK))
     {
-        LOG_INFO("event loop created epollfd: %d eventfd: %d", epollfd, evfd);
+        LOG_INFO("epollfd: %d eventfd: %d", epollfd, evfd);
     }
 
     ~EventLoop()

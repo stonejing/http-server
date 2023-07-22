@@ -13,35 +13,10 @@
 #include <string>
 #include <iostream>
 
+#include "bind_and_listen.h"
+
 #define MAX_EVENT_NUMBER 1024
 #define BUFFER_SIZE 1024
-
-int setnonblocking(int fd)
-{
-    int old_option = fcntl(fd, F_GETFL);
-    int new_option = old_option | O_NONBLOCK;
-    fcntl(fd, F_SETFL, new_option);
-    return old_option;
-}
-
-void addfd(int epollfd, int fd, bool enable_et)
-{
-    epoll_event event;
-    event.data.fd = fd;
-    event.events = EPOLLIN;
-    if(enable_et)
-        event.events |= EPOLLET;
-    epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event);
-    setnonblocking(fd);
-}
-
-void modfd(int epollfd, int fd, int ev)
-{
-    epoll_event event;
-    event.data.fd = fd;
-    event.events = ev | EPOLLET;
-    epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event);
-}
 
 void et(epoll_event* events, int number, int epollfd, int listenfd)
 {
@@ -54,8 +29,7 @@ void et(epoll_event* events, int number, int epollfd, int listenfd)
             printf("%d handle connection, %s.\n", sockfd, __TIME__);
             struct sockaddr_in client_address;
             socklen_t len = sizeof(client_address);
-            int connfd = accept(listenfd, (struct sockaddr*)&client_address,
-                                &len);
+            int connfd = accept(listenfd, (struct sockaddr*)&client_address, &len);
             addfd(epollfd, connfd, true);
         }
         else if(events[i].events & EPOLLIN)
@@ -124,9 +98,13 @@ void et(epoll_event* events, int number, int epollfd, int listenfd)
         else if(events[i].events & EPOLLOUT)
         {
             std::cout << "epoll out" << std::endl;
-            std::string response = "HTTP/1.1 200 OK\r\nserver: nginx1223123 \
-                12\r\nContent-Type: text/html\r\nConnection: Keep-Alive\r\nKeep-Alive: timeout=5, max=1000\r\n\r\nTEST";
-            int res = send(sockfd, response.c_str(), response.size(), 0);
+            std::string response = "HTTP/1.1 200 OK\r\nserver: nginx122312312\r\n"
+                                "Content-Type: text/html\r\nConnection: Keep-Alive\r\n"
+                                "Keep-Alive: timeout=5, max=1000\r\n"
+                                "Content-Length: 0\r\n"         
+                                "\r\n";
+            std::cout << response.length() << std::endl;
+            int res = send(sockfd, response.c_str(), response.length(), 0);
             std::cout << res << std::endl;
             modfd(epollfd, sockfd, EPOLLIN);
             std::cout << "epoll out send over." << std::endl;
@@ -140,27 +118,10 @@ void et(epoll_event* events, int number, int epollfd, int listenfd)
 
 int main(void)
 {
-    int ret = 0;
-    struct sockaddr_in address;
-    bzero(&address, sizeof(address));
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(8000);
-
-    int listenfd = socket(PF_INET, SOCK_STREAM, 0);
-    assert(listenfd > 0);
-
-    int reuse = 1;
-	setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
-
-    ret = bind(listenfd, (struct sockaddr*)&address, sizeof(address));
-    assert(ret != -1);
-
-    ret = listen(listenfd, 5);
-    assert(ret != -1);
+    int listenfd = bind_and_listen();
 
     epoll_event events[MAX_EVENT_NUMBER];
-    int epollfd = epoll_create(5);
+    int epollfd = epoll_create1(0);
     assert(epollfd != -1);
     addfd(epollfd, listenfd, true);
 
@@ -173,7 +134,6 @@ int main(void)
             printf("epoll failure.\n");
             break;
         }
-        // lt(events, ret, epollfd, listenfd);
         et(events, ret, epollfd, listenfd);
     }
 

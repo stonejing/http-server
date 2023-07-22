@@ -18,8 +18,8 @@ Http::Http(int epollfd, int fd) : sockfd(fd),
     channel->set_write_callback(std::bind(&Http::handleWrite, this));
     // channel->set_error_callback(std::bind(&Http::handleError, this));
 }
-// 对于一个无协议的 echo 服务器来说，就是收到多少发送多少
 
+// 对于一个无协议的 echo 服务器来说，就是收到多少发送多少，不需要等到协议解析
 void Http::handleRead()
 {
     LOG_INFO("http handle read");
@@ -28,9 +28,8 @@ void Http::handleRead()
     {
         channel->set_event(EPOLLOUT);
         // process buffer
-        std::string s(buffer.begin(), buffer.begin() + read_idx);
+        // std::string s(buffer.begin(), buffer.begin() + read_idx);
         // LOG_INFO("%s", s);
-        cout << s << endl;
         LOG_INFO("read len: %d", read_idx);
     }
     else 
@@ -45,13 +44,14 @@ void Http::handleWrite()
     // get processed buffer
     // send processed buffer
     LOG_INFO("http start write the buffer");
-    string response = "HTTP/1.1 200 OK\r\nserver: nginx1223123 \
-        12\r\nContent-Type: text/html\r\nConnection: Keep-Alive\r\nKeep-Alive: timeout=5, max=1000\r\n\r\nTEST";
-    read_idx = response.size();
-    buffer = std::vector<char>(response.begin(), response.end()); 
+    string response = "HTTP/1.1 200 OK\r\nserver: nginx122312312\r\n"
+                        "Content-Type: text/html\r\n"
+                        "Connection: Keep-Alive\r\n"
+                        "Content-Length: 4\r\n"
+                        "Keep-Alive: timeout=5, max=1000\r\n\r\n"
+                        "TEST";
     // bufferWrite();
     int res = send(sockfd, response.c_str(), response.size(), 0);
-    cout << res << endl;
     read_idx = 0;
     channel->set_event(EPOLLIN | EPOLLET);
     // epollDelFd(epollfd, sockfd);
