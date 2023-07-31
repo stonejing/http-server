@@ -17,35 +17,45 @@ enum HTTP_CODE { NO_REQUEST = 0, GET_REQUEST, BAD_REQUEST,
                  INTERNAL_ERROR, CLOSED_CONNECTION };
 enum LINE_STATUS { LINE_OK  = 0, LINE_BAD, LINE_OPEN };
 
+
 class HttpRequest
 {
 public:
-    void addBuffer(string& inBuffer)
+    void add_buffer(string& inBuffer);
+    // return true if the full http request is got, if true, reset http request variable
+    void request_reset()
     {
-        buffer += inBuffer;
+        buffer_.clear();
+        start_pos_ = 0;
+        headers_.clear();
     }
-
-    HTTP_CODE   parse_request_line();    // the first line of request
-    HTTP_CODE   parse_headers();
-    HTTP_CODE   parse_content();
-
-    bool get_keep_alive()
+    // 三种情况：完成 0，未完成 1，(错误 2，假定不会发生)
+    int get_parse_status()
     {
-        return keep_alive;
-    }
+        if(status_ == 0)
+        {
+            request_reset();
+        }
+        return status_;
+    }        
+    void get_information(bool keep_alive, string& URL);
 
 private:
-    METHOD parse_method();
-    void parse_URL();
+    // 假定所有的 HTTP request 的格式都是对的，没有出错的情况，只会有接收不完全的情况
+    HTTP_CODE   parse_request_line();    // the first line of request
+    HTTP_CODE   parse_headers();        // store all headers, only concentrate keep-alive
+    HTTP_CODE   parse_content();        // only for head or post method
     
-    int start_pos       = 0;
-    int end_pos         = 0;
-    CHECK_STATE         checkstate;
-    int start_line      = 0;
-    string buffer;
+    string buffer_;                     // buffer that should be parsed
 
-    string URL;
-    map<string, string> headers;
+    int start_pos_       = 0;
+    int end_pos_         = 0;
 
-    bool keep_alive = false;
+    map<string, string> headers_;
+
+    string method_;                     // only support GET
+    string http_version_;               // currently only support HTTP/1.1
+    string URL_;
+    bool keep_alive_ = false;
+    int status_    = 1;
 };

@@ -22,7 +22,7 @@ int main(void)
 
     LOG_INFO("main start server");
 
-    Webserver server(8, 8000);
+    Webserver server(1, 8000);
     server.serverAcceptStart();
 
     return 0;

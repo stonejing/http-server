@@ -8,7 +8,7 @@
 
 Http::Http(int epollfd, int fd) : sockfd(fd), 
                     channel(make_shared<Channel>(epollfd, fd)), 
-                    buffer(std::vector<char>(1024)),
+                    buffer(std::vector<char>(8096)),
                     read_idx(0),
                     write_idx(0),
                     epollfd(epollfd)
@@ -24,42 +24,38 @@ void Http::handleRead()
 {
     LOG_INFO("http handle read");
     // get read buffer
-    if(bufferRead())
-    {
-        channel->set_event(EPOLLOUT);
-        // process buffer
-        cout << buffer.size() << endl;
-        std::string s(buffer.begin(), buffer.end());
-        for(int i = 0; i < read_idx; i++)
-        {
-            cout << buffer[i];
-        }
-    }
-    else 
+    int ret = bufferRead();
+    if(ret == -1 || ret == 0)
     {
         LOG_INFO("http epoll delte sockfd %d", sockfd);
         epollDelFd(epollfd, sockfd);
+    }
+    else
+    {
+        string res = std::string(buffer.begin(), buffer.begin() + read_idx);
+        cout << res << endl;
+        request.add_buffer(res);    // 添加并且 parse 
+        read_idx = 0;
+        if(request.get_parse_status() == 0)
+        {
+            request.get_information(keep_alive_, URL_);
+            channel->set_event(EPOLLOUT);
+        }
     }
 }
 
 void Http::handleWrite()
 {
-    // get processed buffer
-    // send processed buffer
     LOG_INFO("http start write the buffer");
-    string response = "HTTP/1.1 200 OK\r\nserver: nginx122312312\r\n"
-                        "Content-Type: text/html\r\n"
-                        "Connection: Keep-Alive\r\n"
-                        "Content-Length: 4\r\n"
-                        "Keep-Alive: timeout=5, max=1000\r\n\r\n"
-                        "TEST";
     // bufferWrite();
-    int res = send(sockfd, response.c_str(), response.size(), 0);
-    read_idx = 0;
+    response.set_information(true, URL_);
+    string res = response.get_response(read_idx);
+    cout << res.size() << endl;
+    buffer = std::vector<char>(res.begin(), res.end());
+    bufferWrite();
     channel->set_event(EPOLLIN | EPOLLET);
-    // epollDelFd(epollfd, sockfd);
-    // channel->set_event(EPOLLIN);
-    // LOG_INFO("%d", write_idx);
+    buffer.resize(1024);
+    read_idx = 0;
 }
 
 // nonblock file descriptor 
@@ -70,38 +66,41 @@ void Http::handleWrite()
 // 3. 对方发送完了，也读完了   
 
 // 只有两种返回状态：缓冲区 buffer 读完了，出现错误或socket关闭
-bool Http::bufferRead()
+// buffer read 最多读取 8096 字节，返回三种状态：（出错 -1，远程关闭连接 0，）可以合并成一个；
+// （缓冲区还可以读 1，缓冲区已经没有了 2）也可以合并成一个
+// 第一种情况：直接关闭连接，删除 HTTP 对象就好了
+// 第二种情况：都是直接将收到的 buffer 传入到 httprequest 对象，
+//      EPOLLOUT event 设定需要从 request parse 判断，http request 有没有收取完毕；
+int Http::bufferRead()
 {
     write_idx = 0;
-    if(read_idx >= buffer_size)
-    {
-        return false;
-    }
-
     int bytes_read = 0;
     // epoll ET mode, should read all buffer in the kernel
-    while(true)
+    int loop = 4;
+    while(loop--)
     {
-        bytes_read = recv(sockfd, buffer.data() + read_idx, buffer_size - read_idx, 0);
+        bytes_read = ::recv(sockfd, buffer.data() + read_idx, buffer_size, 0);
         // read error happened
         if(bytes_read == -1)
         {
-            // no message the recv return -1
+            // no message in the buffer, wait the next EPOLLIN event
             if(errno == EAGAIN || errno == EWOULDBLOCK)
-                break;
-            return false;
+            {
+                return 2;
+            }
+            return -1;
         }
-        // remove close socket
+        // remote close the connection
         else if(bytes_read == 0)
         {
-            return false;
+            return 0;
         }
         read_idx += bytes_read;
     }
-    return true;
+    return 1;
 }
 
-// non block write
+// non block write，一次性将 response 全部发送；暂时没有考虑到 EPOLLOUT 写缓冲区满时的事件
 bool Http::bufferWrite()
 {
     int bytes_send = 0;

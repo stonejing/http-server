@@ -1,5 +1,7 @@
 #include "log.h"
 #include "channel.h"
+#include "httprequest.h"
+#include "httpresponse.h"
 
 #include <future>
 #include <vector>
@@ -20,7 +22,7 @@ public:
     void handleWrite();
     void handleError();
 
-    bool bufferRead();
+    int bufferRead();
     bool bufferWrite();
 
     std::shared_ptr<Channel> get_channel()
@@ -32,11 +34,20 @@ private:
     std::shared_ptr<Channel> channel; 
     int sockfd;
     int epollfd;
-    std::vector<char> buffer; 
-    // char buffer[1024];
+    
     int read_idx;
     int write_idx;
-    static const int buffer_size = 1024;
+    
+    vector<char> buffer;
+
+    const int buffer_size = 1024;
+
+    string file_path;
 
     CLogger& Log = CLogger::getInstance();
+    HttpRequest request;
+    HttpResponse response;
+
+    string URL_;
+    bool keep_alive_;
 };

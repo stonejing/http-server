@@ -72,8 +72,6 @@ private:
     std::mutex mut;
     std::condition_variable cond;
 
-    int thread_safe_test = 0;
-
 public:
     static CLogger& getInstance()
     {

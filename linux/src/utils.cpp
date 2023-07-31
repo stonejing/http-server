@@ -3,7 +3,6 @@
 #include <sys/socket.h>
 #include "log.h"
 #include "utils.h"
-#include "config.h"
 
 int socket_bind_listen_tcp_v4(int port)
 {
