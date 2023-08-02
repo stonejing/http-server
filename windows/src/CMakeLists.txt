@@ -1,8 +1,8 @@
 
 # find_package(Threads REQUIRED)
 
-include_directories("D:/Program/OpenSSL/include")
-link_directories("D:/Program/OpenSSL/lib/")
+include_directories("D:/Code/project/http-server/windows/3rd/OpenSSL/include")
+link_directories("D:/Code/project/http-server/windows/3rd/OpenSSL/lib/")
 
 set(SRC_LIST main.cpp server.cpp shadowsocks.cpp crypto.cpp eventloop.cpp http.cpp utils.cpp)
 

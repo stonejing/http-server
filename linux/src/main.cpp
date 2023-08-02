@@ -1,6 +1,7 @@
 #include <chrono>
 #include <string>
 #include <memory>
+#include <thread>
 #include "assert.h"
 
 #include "log.h"
@@ -20,10 +21,15 @@ int main(void)
     CLogger& Log = CLogger::getInstance();
     Log.init(log_path);
 
-    LOG_INFO("main start server");
+    Webserver http_server(1, 8000);
+    std::thread t1(std::bind(&Webserver::serverAcceptStart, &http_server));
+    t1.detach();
+    LOG_INFO("main start http server");
+    // http_server.serverAcceptStart();
 
-    Webserver server(1, 8000);
-    server.serverAcceptStart();
-
+    Webserver http_proxy_server(1, 8001);
+    std::thread t2(std::bind(&Webserver::serverAcceptStart, &http_proxy_server));
+    t2.detach();
+    LOG_INFO("main start http proxy server");
     return 0;
 }

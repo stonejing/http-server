@@ -97,11 +97,16 @@ private:
         if(URL_ == "/")
         {
             status_ = 200;
-            content_ = "HELLO WORLD";
-            return;
+            URL_ = "/index.html";
         }
         string file_path = root_path_ + URL_;
         std::ifstream file(file_path);
+        if(!file.good()) 
+        {
+            status_ = 404;
+            content_ = "resource not found";
+            return;
+        }
         if(!file.is_open())
         {
             std::cerr << "Error opening file." << std::endl;
