@@ -1,1 +1,0 @@
-add_executable(select_concurrent select_concurrent.cpp)

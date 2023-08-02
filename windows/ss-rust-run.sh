@@ -1,1 +1,0 @@
-D:\\代理软件\\shadowsocks-rust--v1.15.0\\ssserver.exe -c D:\\代理软件\\shadowsocks-rust--v1.15.0\\config.json -v
