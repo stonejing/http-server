@@ -1,0 +1,10 @@
+*.exe
+*.out
+
+/.vs
+
+/build
+
+/.vscode
+/.cache
+/out
