@@ -1,3 +1,0 @@
-add_subdirectory(concurrent)
-
-add_subdirectory(miscellaneous)
