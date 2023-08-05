@@ -1,6 +1,5 @@
 #include "httprequest.h"
 #include <algorithm>
-#include <cctype>
 
 void HttpRequest::add_buffer(string& inBuffer)
 {
@@ -22,10 +21,11 @@ void HttpRequest::add_buffer(string& inBuffer)
     }
 }
 
-void HttpRequest::get_information(bool keep_alive, string& URL)
+void HttpRequest::get_information(bool keep_alive, string& URL, map<string, string>& headers)
 {
     keep_alive_ = keep_alive;
     URL = URL_;
+    headers = headers_;
 }
 
 HTTP_CODE HttpRequest::parse_request_line()

@@ -9,6 +9,8 @@
 #include <memory>
 #include <unistd.h>
 
+// 处理 http 请求的类，在类中处理 read 和 write 事件
+// buffer 只需要一个，因为同时只能有 read 和 write 一件事件发生
 class Http
 {
 public: 
@@ -18,36 +20,38 @@ public:
         LOG_INFO("Http destructed");
     }
 
+    std::shared_ptr<Channel> get_channel()
+    {
+        return channel_;
+    }
+
+private:    
     void handleRead();
     void handleWrite();
     void handleError();
 
     int bufferRead();
-    bool bufferWrite();
-
-    std::shared_ptr<Channel> get_channel()
-    {
-        return channel;
-    }
+    int bufferWrite();
 
 private:
-    std::shared_ptr<Channel> channel; 
-    int sockfd;
-    int epollfd;
+    std::shared_ptr<Channel> channel_; 
+    int sockfd_;
+    int epollfd_;
     
-    int read_idx;
-    int write_idx;
+    int read_idx_;
+    int write_idx_;
     
-    vector<char> buffer;
+    vector<char> buffer_;
 
     const int buffer_size = 1024;
 
-    string file_path;
+    string file_path_;
 
     CLogger& Log = CLogger::getInstance();
-    HttpRequest request;
-    HttpResponse response;
+    HttpRequest request_;
+    HttpResponse response_;
 
     string URL_;
     bool keep_alive_;
+    map<string, string> headers_;
 };

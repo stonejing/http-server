@@ -4,6 +4,10 @@
 #include <iostream>
 #include <map>
 #include <fstream>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+#include <filesystem>
 
 using namespace std;
 
@@ -34,10 +38,9 @@ public:
         status_line_map_[500] = error_500_title;
     }
 
-    string& get_response(int& size) 
+    string& get_response() 
     { 
         set_response();
-        size = response_.size(); 
         return response_; 
     }
 
@@ -87,7 +90,6 @@ private:
 
     void get_content() 
     {
-        cout << "get_content: " << URL_ << endl;
         if(URL_.empty())
         {
             status_ = 400;
@@ -98,6 +100,37 @@ private:
         {
             status_ = 200;
             URL_ = "/index.html";
+        }
+        else if(URL_ == "/time")
+        {
+            // Get the current time using <chrono>
+            auto currentTime = std::chrono::system_clock::now();
+            std::time_t currentTimeT = std::chrono::system_clock::to_time_t(currentTime);
+            // Format the time as a string
+            std::stringstream timeStream;
+            timeStream << std::put_time(std::localtime(&currentTimeT), "%Y-%m-%d %H:%M:%S");
+            // Get the formatted time string
+            std::string timeString = timeStream.str();
+            // Display the current time
+            status_ = 200;
+            content_ = timeString;
+            return;
+        }
+        else if(URL_ == "/file")
+        {
+            string current_path = root_path_ + URL_;
+            cout << current_path << endl;
+            content_ = "";
+            for (const auto& entry : std::filesystem::directory_iterator(current_path)) {
+                // if (std::filesystem::is_directory(entry)) {
+                //     std::cout << "[Directory] " << entry.path().filename().string() << std::endl;
+                // } else if (std::filesystem::is_regular_file(entry)) {
+                //     std::cout << "[File] " << entry.path().filename().string() << std::endl;
+                // }
+                content_ +=  entry.path().filename().string() + "\n";
+            }
+            status_ = 200;
+            return;
         }
         string file_path = root_path_ + URL_;
         std::ifstream file(file_path);

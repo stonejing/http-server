@@ -6,56 +6,89 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-Http::Http(int epollfd, int fd) : sockfd(fd), 
-                    channel(make_shared<Channel>(epollfd, fd)), 
-                    buffer(std::vector<char>(8096)),
-                    read_idx(0),
-                    write_idx(0),
-                    epollfd(epollfd)
+Http::Http(int epollfd, int fd) : sockfd_(fd), 
+                    channel_(make_shared<Channel>(epollfd, fd)), 
+                    buffer_(std::vector<char>(8096)),
+                    read_idx_(0),
+                    write_idx_(0),
+                    epollfd_(epollfd)
 {
-    channel->set_event(EPOLLIN);
-    channel->set_read_callback(std::bind(&Http::handleRead, this));
-    channel->set_write_callback(std::bind(&Http::handleWrite, this));
+    channel_->set_event(EPOLLIN);
+    channel_->set_read_callback(std::bind(&Http::handleRead, this));
+    channel_->set_write_callback(std::bind(&Http::handleWrite, this));
     // channel->set_error_callback(std::bind(&Http::handleError, this));
 }
 
-// 对于一个无协议的 echo 服务器来说，就是收到多少发送多少，不需要等到协议解析
 void Http::handleRead()
 {
     LOG_INFO("http handle read");
-    // get read buffer
     int ret = bufferRead();
     if(ret == -1 || ret == 0)
     {
-        LOG_INFO("http epoll delte sockfd %d", sockfd);
-        epollDelFd(epollfd, sockfd);
+        LOG_ERR("http read error, epoll delte sockfd %d", sockfd_);
+        epollDelFd(epollfd_, sockfd_);
     }
     else
     {
-        string res = std::string(buffer.begin(), buffer.begin() + read_idx);
+        string res = std::string(buffer_.begin(), buffer_.begin() + read_idx_);
+        // HTTP request
         cout << res << endl;
-        request.add_buffer(res);    // 添加并且 parse 
-        read_idx = 0;
-        if(request.get_parse_status() == 0)
+        request_.add_buffer(res);    // 添加 buffer 并且 parse 
+        read_idx_ = 0;
+        // 如果 parse 完成，设置 channel 的 event 为 EPOLLOUT；否则继续 read buffer
+        if(request_.get_parse_status() == 0)
         {
-            request.get_information(keep_alive_, URL_);
-            channel->set_event(EPOLLOUT);
+            request_.get_information(keep_alive_, URL_, headers_);
+            request_.request_reset();
+
+            string host_ = "";
+            if(headers_.count("host"))
+            {
+                host_ = headers_["host"];
+            }            
+
+            if(host_ == "127.0.0.1:8000")
+            {
+                LOG_INFO("http start write the buffer");
+                response_.set_information(true, URL_);
+                string res = response_.get_response();
+                read_idx_ = res.size();
+                // HTTP response
+                cout << res << endl;
+                buffer_ = std::vector<char>(res.begin(), res.end());
+                channel_->set_event(EPOLLOUT);
+            }
+            else
+            {
+                LOG_INFO("using http proxy");
+                string res = "HTTP/1.1 200 OK\r\nContent-Length: 1\r\n\r\nK";
+                read_idx_ = res.size();
+                buffer_ = std::vector<char>(res.begin(), res.end());
+                channel_->set_event(EPOLLOUT);
+            }
         }
     }
 }
 
 void Http::handleWrite()
 {
-    LOG_INFO("http start write the buffer");
-    // bufferWrite();
-    response.set_information(true, URL_);
-    string res = response.get_response(read_idx);
-    cout << res.size() << endl;
-    buffer = std::vector<char>(res.begin(), res.end());
-    bufferWrite();
-    channel->set_event(EPOLLIN | EPOLLET);
-    buffer.resize(1024);
-    read_idx = 0;
+    int ret = bufferWrite();
+    if(ret == 1)
+    {
+        channel_->set_event(EPOLLIN | EPOLLET);
+        buffer_.resize(8096);
+        read_idx_ = 0;
+    }
+    else if(ret == 2)
+    {
+        LOG_INFO("http write buffer not finished");
+        channel_->set_event(EPOLLOUT | EPOLLET);
+    }
+    else
+    {
+        LOG_ERR("http write error, epoll delte sockfd %d", sockfd_);
+        epollDelFd(epollfd_, sockfd_);
+    }
 }
 
 // nonblock file descriptor 
@@ -71,15 +104,15 @@ void Http::handleWrite()
 // 第一种情况：直接关闭连接，删除 HTTP 对象就好了
 // 第二种情况：都是直接将收到的 buffer 传入到 httprequest 对象，
 //      EPOLLOUT event 设定需要从 request parse 判断，http request 有没有收取完毕；
+// epoll ET mode, should read all buffer in the kernel
 int Http::bufferRead()
 {
-    write_idx = 0;
+    write_idx_ = 0;
     int bytes_read = 0;
-    // epoll ET mode, should read all buffer in the kernel
     int loop = 4;
     while(loop--)
     {
-        bytes_read = ::recv(sockfd, buffer.data() + read_idx, buffer_size, 0);
+        bytes_read = ::recv(sockfd_, buffer_.data() + read_idx_, buffer_size, 0);
         // read error happened
         if(bytes_read == -1)
         {
@@ -95,37 +128,31 @@ int Http::bufferRead()
         {
             return 0;
         }
-        read_idx += bytes_read;
+        read_idx_ += bytes_read;
     }
     return 1;
 }
 
 // non block write，一次性将 response 全部发送；暂时没有考虑到 EPOLLOUT 写缓冲区满时的事件
-bool Http::bufferWrite()
+int Http::bufferWrite()
 {
     int bytes_send = 0;
-
     while(true)
     {
-        if(read_idx == write_idx) 
-        {
-            read_idx = 0;
-            channel->set_event(EPOLLIN);
-            return true;
-        }
-        bytes_send = send(sockfd, buffer.data() + write_idx, read_idx - write_idx, 0);
+        bytes_send = send(sockfd_, buffer_.data() + write_idx_, read_idx_ - write_idx_, 0);
         if(bytes_send == -1)
         {
             // write buffer full, wait for another chance
             if(errno == EAGAIN || errno == EWOULDBLOCK)
             {
-                channel->set_event(EPOLLOUT); // 可以不这样设置
-                break;
+                channel_->set_event(EPOLLOUT); // 可以不这样设置
+                return 2;
             }
-            return false;
+            return -1;
         }
-        else if(bytes_send == 0) return false;
-        write_idx += bytes_send;
+        else if(bytes_send == 0) return 0;
+        write_idx_ += bytes_send;
+        if(write_idx_ == read_idx_) break;
     }  
-    return true;
+    return 1;
 }

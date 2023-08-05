@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <iostream>
 
 using namespace std;
 
@@ -32,13 +33,10 @@ public:
     // 三种情况：完成 0，未完成 1，(错误 2，假定不会发生)
     int get_parse_status()
     {
-        if(status_ == 0)
-        {
-            request_reset();
-        }
         return status_;
-    }        
-    void get_information(bool keep_alive, string& URL);
+    }     
+
+    void get_information(bool keep_alive, string& URL, map<string, string>& headers);
 
 private:
     // 假定所有的 HTTP request 的格式都是对的，没有出错的情况，只会有接收不完全的情况

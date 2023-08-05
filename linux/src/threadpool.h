@@ -27,7 +27,6 @@ public:
             eventloop_size++;
         }
         status = true;
-        LOG_INFO("thread pool created");
     }
 
     ~ThreadPool() 
@@ -36,20 +35,8 @@ public:
             thread.join();
     }
 
-    // void startLoop()
-    // {
-    //     std::unique_lock<mutex> lock(mut);
-    //     // std::lock_guard<std::mutex> lock(mut);
-    //     shared_ptr<EventLoop> loop(make_shared<EventLoop>());
-    //     loops.push_back(std::move(loop));
-    //     eventloop_size++;
-    //     loop->loop();
-    //     // lock.unlock();
-    // }
-
     bool threadPoolStatus()
     {
-        LOG_INFO("get threadpool status");
         if(status) return true;
         while(!status)
         {

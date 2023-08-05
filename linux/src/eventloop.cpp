@@ -5,16 +5,10 @@
 
 void EventLoop::loop()
 {
-    // std::random_device rd;
-    // std::mt19937 gen(rd());
-    // std::uniform_int_distribution<int> dist(1, 5);  // Random duration between 1 and 5 seconds
-    // std::this_thread::sleep_for(std::chrono::seconds(3));
     CLogger& Log = CLogger::getInstance();          // class 创建完成，但是内部成员可能没有初始化完成
     epollAddFd(epollfd, evfd);
-    LOG_INFO("loop function start");
     while(1)
     {
-        LOG_INFO("epoll_wait once.");
         int number = epoll_wait(epollfd, events, MAX_EVENT_NUMBER, -1);
         if((number < 0 ) && (errno != EINTR))
         {
@@ -33,7 +27,7 @@ void EventLoop::loop()
             }
             else 
             {
-                LOG_INFO("event handle epoll event: %d", sockfd);
+                // LOG_INFO("event handle epoll event: %d", sockfd);
                 socket_http_map[sockfd]->get_channel()->handleEvent();
             }
         }
