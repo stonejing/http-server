@@ -54,7 +54,7 @@ public:
     std::shared_ptr<EventLoop> getNextLoop()
     {
         next = (next + 1) % thread_numbers;
-        LOG_INFO("get %dth thread.", next);
+        LOG_INFO("get", next, "th thread.");
         return loops[next];
     }
 

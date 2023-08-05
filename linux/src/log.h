@@ -95,7 +95,7 @@ public:
         oss << "\033[32;1m[INFO]\033[0m\033[34m(" << file_name << ":" << file_line << ")\033[0m ";
         oss << get_time_stamp_c();
         oss << " " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << " ";
-        oss << format << " ";
+        oss << format;
         // Use the stream to format the arguments
         if constexpr (sizeof...(args) > 0) {
             (oss << ... << args);
@@ -127,40 +127,16 @@ public:
         lock.unlock();
     }
 
-    // template<typename... Args>
-    // void log_warn(const char* file_name, int file_line, const std::string& format, Args... args)
-    // {
-    //     std::unique_lock<std::mutex> lock(mut);
-    //     char buffer[256];
-    //     #ifdef CONSOLE
-    //         int offset = std::snprintf(buffer, sizeof(buffer), "\033[33;1m[INFO]\033[0m\033[34m(%s:%d)\033[0m ", file_name, file_line);
-    //         offset += get_time_stamp_c().c_str();
-    //         offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
-    //         if (offset >= 0 && offset < sizeof(buffer)) {
-    //             std::snprintf(buffer + offset, sizeof(buffer) - offset, format.c_str(), args...);
-    //         }
-    //         std::cout << buffer << std::endl;
-    //     #else
-    //         int offset = std::snprintf(buffer, sizeof(buffer), "[INFO] (%s:%d) ", file_name, file_line);
-    //         offset += get_time_stamp_cpp(buffer + offset);
-    //         offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
-    //         if (offset >= 0 && offset < sizeof(buffer)) {
-    //             std::snprintf(buffer + offset, sizeof(buffer) - offset, format, args...);
-    //         }
-    //         log_file << buffer << "\n";
-    //     #endif
-    //     lock.unlock();
-    // }
     template<typename... Args>
     void log_warn(const char* file_name, int file_line, const std::string& format, Args... args)
     {
         std::unique_lock<std::mutex> lock(mut);
 
         std::ostringstream oss;
-        oss << "\033[31;1m[ERR]\033[0m\033[34m(" << file_name << ":" << file_line << ")\033[0m ";
+        oss << "\033[33;1m[WARN]\033[0m\033[34m(" << file_name << ":" << file_line << ")\033[0m ";
         oss << get_time_stamp_c();
         oss << " " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << " ";
-
+        oss << format;
         // Use the stream to format the arguments
         if constexpr (sizeof...(args) > 0) {
             (oss << ... << args);
@@ -179,7 +155,7 @@ public:
         oss << "\033[31;1m[ERR]\033[0m\033[34m(" << file_name << ":" << file_line << ")\033[0m ";
         oss << get_time_stamp_c();
         oss << " " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << " ";
-
+        oss << format;
         // Use the stream to format the arguments
         if constexpr (sizeof...(args) > 0) {
             (oss << ... << args);

@@ -25,7 +25,7 @@ void Http::handleRead()
     int ret = bufferRead();
     if(ret == -1 || ret == 0)
     {
-        LOG_ERR("http read error, epoll delte sockfd %d", sockfd_);
+        LOG_ERR("http read error, epoll delte sockfd: ", sockfd_);
         epollDelFd(epollfd_, sockfd_);
     }
     else
@@ -54,7 +54,7 @@ void Http::handleRead()
                 string res = response_.get_response();
                 read_idx_ = res.size();
                 // HTTP response
-                cout << res << endl;
+                // cout << res << endl;
                 buffer_ = std::vector<char>(res.begin(), res.end());
                 channel_->set_event(EPOLLOUT);
             }

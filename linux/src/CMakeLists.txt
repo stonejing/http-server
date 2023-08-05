@@ -1,3 +1,15 @@
-add_executable(main main.cpp log.cpp webserver.cpp utils.cpp 
-                eventloop.cpp http.cpp channel.cpp
-                httprequest.cpp httpresponse.cpp)
+
+
+set(sources 
+    main.cpp
+    webserver.cpp
+    utils.cpp
+    eventloop.cpp
+    http.cpp
+    channel.cpp
+    httprequest.cpp
+    httpresponse.cpp
+)
+
+add_executable(main ${sources})
+target_link_libraries(main pthread)
