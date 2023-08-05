@@ -30,12 +30,12 @@ class EventLoop
 public:
     EventLoop() : epollfd(epoll_create1(EPOLL_CLOEXEC)), evfd(eventfd(0, EFD_NONBLOCK))
     {
-        LOG_INFO("epollfd: %d eventfd: %d", epollfd, evfd);
+        LOG_INFO("epollfd: ", epollfd,  " eventfd: ", evfd);
     }
 
     ~EventLoop()
     {
-        LOG_INFO("event loop released close epollfd: %d", epollfd);
+        LOG_INFO("event loop released close epollfd: ", epollfd);
         close(epollfd);
         close(evfd);
     }
@@ -43,7 +43,7 @@ public:
     // 加锁性能什么的不重要，将所有的功能先正确的实现非常重要
     void setNewSocketFd(int fd)
     {
-        LOG_INFO("set new socket fd: %d", fd);
+        LOG_INFO("set new socket fd: ", fd);
         // create HTTP object at here
         std::lock_guard<std::mutex> socket_queue_lock(mut);
         socket_queue.push(fd);

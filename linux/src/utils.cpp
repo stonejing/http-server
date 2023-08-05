@@ -13,10 +13,10 @@ int socket_bind_listen_tcp_v4(int port)
     int listen_fd = 0;
     if((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-        LOG_ERR("server create socket fd: %d", listen_fd);
+        LOG_ERR("server create socket fd: ", listen_fd);
         return -1;
     }
-    LOG_INFO("server create socket fd: %d", listen_fd);
+    LOG_INFO("server create socket fd: ", listen_fd);
 
     reusesocket(listen_fd);
     
@@ -27,20 +27,20 @@ int socket_bind_listen_tcp_v4(int port)
     int ret;
     if((ret = bind(listen_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1))
     {
-        LOG_ERR("server bind err: %d", listen_fd);
+        LOG_ERR("server bind err: ", listen_fd);
         return -1;
     }
-    LOG_INFO("server bind socket: %d", listen_fd);
+    LOG_INFO("server bind socket: ", listen_fd);
     
     if(listen(listen_fd, 5) == -1)
     {
-        LOG_ERR("server listen error: %d", listen_fd);
+        LOG_ERR("server listen error: ", listen_fd);
         return -1; 
     }
     
     if(setnonblocking(listen_fd) == -1)
     {
-        LOG_ERR("set listen fd non blocking.", listen_fd); 
+        LOG_ERR("set listen fd non blocking: ", listen_fd); 
         abort();
     }
     

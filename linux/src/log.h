@@ -13,6 +13,8 @@
 #include <cstring>
 #include <thread>
 #include <chrono>
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -44,24 +46,24 @@ private:
 	CLogger& operator=(const CLogger&) = delete;
 
 private:
-    int get_time_stamp_c(char* buffer) 
+    std::string get_time_stamp_c() 
     {
         struct timeval tv;
         gettimeofday(&tv, nullptr);
         time_t currTime = tv.tv_sec;
         struct tm* timeinfo = localtime(&currTime);
-        // int microsecond = tv.tv_usec;
-        // int length = std::strftime(buffer, 27, "%Y-%m-%d %H:%M:%S", timeinfo);
-        // snprintf(buffer + length, 7, ".%06d", microsecond);
-        return std::strftime(buffer, 20, "%Y-%m-%d %H:%M:%S", timeinfo);
+        char buffer[20];
+        std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeinfo);
+        return std::string(buffer);
     }
 
-    int get_time_stamp_cpp(char* buffer) 
+    std::string get_time_stamp_cpp() 
     {
         auto now = std::chrono::system_clock::now();
         auto time = std::chrono::system_clock::to_time_t(now);
+        char buffer[20];
         std::strftime(buffer, 20, "%Y-%m-%d %H:%M:%S", std::localtime(&time));
-        return 19;
+        return std::string(buffer);
     }
 
 private:
@@ -88,76 +90,102 @@ public:
     void log_info(const char* file_name, int file_line, const char* format, Args... args)
     {
         std::unique_lock<std::mutex> lock(mut);
-        char buffer[1024];
-        #ifdef CONSOLE
-            int offset = std::snprintf(buffer, sizeof(buffer), "\033[32;1m[INFO]\033[0m\033[34m(%s:%d)\033[0m ", file_name, file_line);
-            offset += get_time_stamp_c(buffer + offset);
-            offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
-            if (offset >= 0 && offset < sizeof(buffer)) {
-                std::snprintf(buffer + offset, sizeof(buffer) - offset, format, args...);
-            }
-            std::cout << buffer << std::endl;
-        #else
-            int offset = std::snprintf(buffer, sizeof(buffer), "[INFO] (%s:%d) ", file_name, file_line);
-            offset += get_time_stamp_cpp(buffer + offset);
-            offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
-            if (offset >= 0 && offset < sizeof(buffer)) 
-            {
-                std::snprintf(buffer + offset, sizeof(buffer) - offset, format, args...);
-            }
-            std::unique_lock<std::mutex> lock(mut);
-            log_file << buffer << "\n";
-        #endif
+
+        std::ostringstream oss;
+        oss << "\033[32;1m[INFO]\033[0m\033[34m(" << file_name << ":" << file_line << ")\033[0m ";
+        oss << get_time_stamp_c();
+        oss << " " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << " ";
+        oss << format << " ";
+        // Use the stream to format the arguments
+        if constexpr (sizeof...(args) > 0) {
+            (oss << ... << args);
+        }
+
+        std::cout << oss.str() << std::endl;
+
+        // char buffer[1024];
+        // #ifdef CONSOLE
+        //     int offset = std::snprintf(buffer, sizeof(buffer), "\033[32;1m[INFO]\033[0m\033[34m(%s:%d)\033[0m ", file_name, file_line);
+        //     offset += get_time_stamp_c(buffer + offset);
+        //     offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
+        //     if (offset >= 0 && offset < sizeof(buffer)) 
+        //     {
+        //         std::snprintf(buffer + offset, sizeof(buffer) - offset, format.c_str(), args...);
+        //     }
+        //     std::cout << buffer << std::endl;
+        // #else
+        //     int offset = std::snprintf(buffer, sizeof(buffer), "[INFO] (%s:%d) ", file_name, file_line);
+        //     offset += get_time_stamp_cpp(buffer + offset);
+        //     offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
+        //     if (offset >= 0 && offset < sizeof(buffer)) 
+        //     {
+        //         std::snprintf(buffer + offset, sizeof(buffer) - offset, format, args...);
+        //     }
+        //     std::unique_lock<std::mutex> lock(mut);
+        //     log_file << buffer << "\n";
+        // #endif
+        lock.unlock();
+    }
+
+    // template<typename... Args>
+    // void log_warn(const char* file_name, int file_line, const std::string& format, Args... args)
+    // {
+    //     std::unique_lock<std::mutex> lock(mut);
+    //     char buffer[256];
+    //     #ifdef CONSOLE
+    //         int offset = std::snprintf(buffer, sizeof(buffer), "\033[33;1m[INFO]\033[0m\033[34m(%s:%d)\033[0m ", file_name, file_line);
+    //         offset += get_time_stamp_c().c_str();
+    //         offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
+    //         if (offset >= 0 && offset < sizeof(buffer)) {
+    //             std::snprintf(buffer + offset, sizeof(buffer) - offset, format.c_str(), args...);
+    //         }
+    //         std::cout << buffer << std::endl;
+    //     #else
+    //         int offset = std::snprintf(buffer, sizeof(buffer), "[INFO] (%s:%d) ", file_name, file_line);
+    //         offset += get_time_stamp_cpp(buffer + offset);
+    //         offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
+    //         if (offset >= 0 && offset < sizeof(buffer)) {
+    //             std::snprintf(buffer + offset, sizeof(buffer) - offset, format, args...);
+    //         }
+    //         log_file << buffer << "\n";
+    //     #endif
+    //     lock.unlock();
+    // }
+    template<typename... Args>
+    void log_warn(const char* file_name, int file_line, const std::string& format, Args... args)
+    {
+        std::unique_lock<std::mutex> lock(mut);
+
+        std::ostringstream oss;
+        oss << "\033[31;1m[ERR]\033[0m\033[34m(" << file_name << ":" << file_line << ")\033[0m ";
+        oss << get_time_stamp_c();
+        oss << " " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << " ";
+
+        // Use the stream to format the arguments
+        if constexpr (sizeof...(args) > 0) {
+            (oss << ... << args);
+        }
+
+        std::cout << oss.str() << std::endl;
         lock.unlock();
     }
 
     template<typename... Args>
-    void log_warn(const char* file_name, int file_line, const char* format, Args... args)
+    void log_err(const char* file_name, int file_line, const std::string& format, Args... args)
     {
         std::unique_lock<std::mutex> lock(mut);
-        char buffer[256];
-        #ifdef CONSOLE
-            int offset = std::snprintf(buffer, sizeof(buffer), "\033[33;1m[INFO]\033[0m\033[34m(%s:%d)\033[0m ", file_name, file_line);
-            offset += get_time_stamp_c(buffer + offset);
-            offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
-            if (offset >= 0 && offset < sizeof(buffer)) {
-                std::snprintf(buffer + offset, sizeof(buffer) - offset, format, args...);
-            }
-            std::cout << buffer << std::endl;
-        #else
-            int offset = std::snprintf(buffer, sizeof(buffer), "[INFO] (%s:%d) ", file_name, file_line);
-            offset += get_time_stamp_cpp(buffer + offset);
-            offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
-            if (offset >= 0 && offset < sizeof(buffer)) {
-                std::snprintf(buffer + offset, sizeof(buffer) - offset, format, args...);
-            }
-            log_file << buffer << "\n";
-        #endif
-        lock.unlock();
-    }
 
-    template<typename... Args>
-    void log_err(const char* file_name, int file_line, const char* format, Args... args)
-    {
-        std::unique_lock<std::mutex> lock(mut);
-        char buffer[256];
-        #ifdef CONSOLE
-            int offset = std::snprintf(buffer, sizeof(buffer), "\033[31;1m[INFO]\033[0m\033[34m(%s:%d)\033[0m ", file_name, file_line);
-            offset += get_time_stamp_c(buffer + offset);
-            offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
-            if (offset >= 0 && offset < sizeof(buffer)) {
-                std::snprintf(buffer + offset, sizeof(buffer) - offset, format, args...);
-            }
-            std::cout << buffer << std::endl;
-        #else
-            int offset = std::snprintf(buffer, sizeof(buffer), "[INFO] (%s:%d) ", file_name, file_line);
-            offset += get_time_stamp_cpp(buffer + offset);
-            offset += std::snprintf(buffer + offset, sizeof(buffer) - offset, " %zu ", std::hash<std::thread::id>{}(std::this_thread::get_id()));
-            if (offset >= 0 && offset < sizeof(buffer)) {
-                std::snprintf(buffer + offset, sizeof(buffer) - offset, format, args...);
-            }
-            log_file << buffer << "\n";
-        #endif
+        std::ostringstream oss;
+        oss << "\033[31;1m[ERR]\033[0m\033[34m(" << file_name << ":" << file_line << ")\033[0m ";
+        oss << get_time_stamp_c();
+        oss << " " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << " ";
+
+        // Use the stream to format the arguments
+        if constexpr (sizeof...(args) > 0) {
+            (oss << ... << args);
+        }
+
+        std::cout << oss.str() << std::endl;
         lock.unlock();
     }
 };

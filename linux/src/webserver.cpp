@@ -20,6 +20,8 @@ void Webserver::serverAcceptStart()
     fd_set read_fd;
     FD_ZERO(&read_fd);
 
+    LOG_INFO("start serverAcceptStart");
+
     while(!quit)
     {
         FD_SET(listen_fd, &read_fd);
