@@ -6,7 +6,6 @@
 
 #include "log.h"
 #include "webserver.h"
-
 #include "threadpool.h"
 
 using std::string;

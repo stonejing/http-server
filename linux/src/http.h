@@ -9,6 +9,13 @@
 #include <memory>
 #include <unistd.h>
 
+
+#ifdef Debug
+    #define HOST "127.0.0.1:8000"
+#else
+    #define HOST "www.stonejing.link"
+#endif
+
 // 处理 http 请求的类，在类中处理 read 和 write 事件
 // buffer 只需要一个，因为同时只能有 read 和 write 一件事件发生
 class Http

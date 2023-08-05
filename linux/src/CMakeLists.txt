@@ -1,5 +1,5 @@
 
-
+# add_definitions(-DDebug=1)
 set(sources 
     main.cpp
     webserver.cpp

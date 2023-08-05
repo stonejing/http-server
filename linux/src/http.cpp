@@ -47,7 +47,7 @@ void Http::handleRead()
                 host_ = headers_["host"];
             }            
 
-            if(host_ == "127.0.0.1:8000")
+            if(host_ == HOST)
             {
                 LOG_INFO("http start write the buffer");
                 response_.set_information(true, URL_);
