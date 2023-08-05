@@ -4,6 +4,8 @@ project(HTTP-SERVER)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
 
+add_definitions(-DDebug=1)
+
 if (UNIX)
     add_subdirectory(linux)
 endif (UNIX)

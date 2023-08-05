@@ -36,6 +36,8 @@ public:
         status_line_map_[403] = error_403_title;
         status_line_map_[404] = error_404_title;
         status_line_map_[500] = error_500_title;
+        root_path_ = std::filesystem::current_path().string() + "/../../../resource";
+        cout << root_path_ << endl;
     }
 
     string& get_response() 
@@ -157,7 +159,7 @@ private:
 
     int status_ = 200;
     bool keep_alive_ = true;     // linger, keep alive
-    const string root_path_{"/mnt/d/Code/project/http-server/resource"};
+    string root_path_;
     string URL_{};           // resource file path
     string content_{};       // response entity content  
 };
