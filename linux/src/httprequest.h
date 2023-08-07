@@ -34,6 +34,11 @@ public:
     int get_parse_status()
     {
         return status_;
+    }
+
+    string get_request()
+    {
+        return request_;
     }     
 
     void get_information(bool keep_alive, string& URL, map<string, string>& headers);
@@ -45,6 +50,7 @@ private:
     HTTP_CODE   parse_content();        // only for head or post method
     
     string buffer_;                     // buffer that should be parsed
+    string request_;
 
     int start_pos_       = 0;
     int end_pos_         = 0;

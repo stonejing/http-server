@@ -1,4 +1,5 @@
 #include "http.h"
+#include "httpproxy.h"
 #include "utils.h"
 #include <asm-generic/errno.h>
 #include <cerrno>
@@ -32,7 +33,7 @@ void Http::handleRead()
     {
         string res = std::string(buffer_.begin(), buffer_.begin() + read_idx_);
         // HTTP request
-        cout << res << endl;
+        // cout << res << endl;
         request_.add_buffer(res);    // 添加 buffer 并且 parse 
         read_idx_ = 0;
         // 如果 parse 完成，设置 channel 的 event 为 EPOLLOUT；否则继续 read buffer
@@ -61,7 +62,19 @@ void Http::handleRead()
             else
             {
                 LOG_INFO("using http proxy");
-                string res = "HTTP/1.1 200 OK\r\nContent-Length: 1\r\n\r\nK";
+                // string res = "HTTP/1.1 200 OK\r\nContent-Length: 1\r\n\r\nX";
+                // read_idx_ = res.size();
+                // buffer_ = std::vector<char>(res.begin(), res.end());
+                // channel_->set_event(EPOLLOUT);
+                string proxy_host = headers_["host"];
+                string proxy_url = URL_;
+                HttpProxy proxy;
+                proxy.set_information(proxy_host, proxy_url);
+                string http_request = request_.get_request();
+                proxy.set_request(http_request);
+
+                string res = proxy.get_response();
+
                 read_idx_ = res.size();
                 buffer_ = std::vector<char>(res.begin(), res.end());
                 channel_->set_event(EPOLLOUT);
@@ -86,7 +99,7 @@ void Http::handleWrite()
     }
     else
     {
-        LOG_ERR("http write error, epoll delte sockfd %d", sockfd_);
+        LOG_ERR("http write error, epoll delte sockfd ", sockfd_);
         epollDelFd(epollfd_, sockfd_);
     }
 }

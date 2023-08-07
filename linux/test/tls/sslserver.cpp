@@ -57,7 +57,8 @@ int main() {
         std::cerr << "Error binding socket." << std::endl;
         return 1;
     }
-
+    int reuse = 1;
+    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
     if (listen(server_socket, 5) < 0) {
         std::cerr << "Error listening on socket." << std::endl;
         return 1;

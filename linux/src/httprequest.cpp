@@ -4,6 +4,7 @@
 void HttpRequest::add_buffer(string& inBuffer)
 {
     buffer_ += inBuffer;
+    request_ = buffer_;
     if(start_pos_ == 0)
     {
         HTTP_CODE ret = parse_request_line();

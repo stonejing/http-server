@@ -96,9 +96,10 @@ private:
         {
             status_ = 400;
             content_ = "resource not found";
+            // URL_ = "/404.html";
             return;
         }
-        if(URL_ == "/")
+        else if(URL_ == "/")
         {
             status_ = 200;
             URL_ = "/index.html";
@@ -121,14 +122,8 @@ private:
         else if(URL_ == "/file")
         {
             string current_path = root_path_ + URL_;
-            cout << current_path << endl;
             content_ = "";
             for (const auto& entry : std::filesystem::directory_iterator(current_path)) {
-                // if (std::filesystem::is_directory(entry)) {
-                //     std::cout << "[Directory] " << entry.path().filename().string() << std::endl;
-                // } else if (std::filesystem::is_regular_file(entry)) {
-                //     std::cout << "[File] " << entry.path().filename().string() << std::endl;
-                // }
                 content_ +=  entry.path().filename().string() + "\n";
             }
             status_ = 200;
@@ -138,8 +133,9 @@ private:
         std::ifstream file(file_path);
         if(!file.good()) 
         {
+            std::ifstream file_404(root_path_ + "/404.html");
             status_ = 404;
-            content_ = "resource not found";
+            content_.assign(std::istreambuf_iterator<char>(file_404), std::istreambuf_iterator<char>());
             return;
         }
         if(!file.is_open())

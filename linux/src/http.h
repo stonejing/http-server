@@ -2,13 +2,13 @@
 #include "channel.h"
 #include "httprequest.h"
 #include "httpresponse.h"
+#include "httpproxy.h"
 
 #include <future>
 #include <vector>
 #include <string>
 #include <memory>
 #include <unistd.h>
-
 
 #ifdef Debug
     #define HOST "127.0.0.1:8000"

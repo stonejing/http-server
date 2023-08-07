@@ -7,6 +7,7 @@ set(sources
     channel.cpp
     httprequest.cpp
     httpresponse.cpp
+    httpproxy.cpp
 )
 
 add_executable(main ${sources})
