@@ -74,8 +74,8 @@ void Http::handleRead()
                 proxy.set_request(http_request);
 
                 string res = proxy.get_response();
-
                 read_idx_ = res.size();
+
                 buffer_ = std::vector<char>(res.begin(), res.end());
                 channel_->set_event(EPOLLOUT);
             }

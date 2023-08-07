@@ -30,7 +30,7 @@ bool HttpProxy::sync_proxy()
 
     freeaddrinfo(destInfo);
 
-    cout << "request: " << request_ << endl;
+    // cout << "request: " << request_ << endl;
 
     send(destSocket, request_.c_str(), request_.size(), 0);
 
