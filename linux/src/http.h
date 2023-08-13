@@ -12,8 +12,6 @@
 
 const int BUFFER_SIZE = 4096;
 
-// 处理 http 请求的类，在类中处理 read 和 write 事件
-// buffer 只需要一个，因为同时只能有 read 和 write 一件事件发生
 class Http
 {
 public: 
@@ -53,6 +51,7 @@ private:
     CLogger& Log = CLogger::getInstance();
     HttpRequest request_;
     HttpResponse response_;
+    HttpProxy http_proxy_;
 
     string URL_;
     bool keep_alive_;

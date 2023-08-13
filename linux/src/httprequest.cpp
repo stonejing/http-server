@@ -6,6 +6,7 @@ string METHOD[8] = {"GET", "POST", "HEAD", "PUT", "DELETE", "TRACE", "OPTIONS", 
 void HttpRequest::add_buffer(string&& inBuffer)
 {
     buffer_.append(inBuffer);
+    cout << buffer_ << endl;
 }
 
 void HttpRequest::http_parse()

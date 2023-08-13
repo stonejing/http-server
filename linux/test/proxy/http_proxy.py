@@ -4,7 +4,6 @@ import threading
 
 def handle_client(client_socket, target_host, target_port, username, password):
     request = client_socket.recv(4096).decode()
-    print(request)
     first_line = request.split('\n')[0]
     url = first_line.split(' ')[1]
 
@@ -40,10 +39,12 @@ def handle_client(client_socket, target_host, target_port, username, password):
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.connect((webserver, port))
+    print(request)
     server_socket.send(request.encode())
 
     while True:
         response = server_socket.recv(4096)
+        print(response)
         if not response:
             break
         client_socket.send(response)

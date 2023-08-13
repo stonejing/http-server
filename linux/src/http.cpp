@@ -35,18 +35,19 @@ void Http::handleRead()
         {
             case 1:
             {
+                LOG_INFO("http request");
                 channel_->set_event(EPOLLOUT | EPOLLET);
                 break;
             }
             case 2:
             {
-                // http proxy
+                LOG_INFO("http proxy");
                 channel_->set_event(EPOLLOUT | EPOLLET);
                 break;
             }
             case 3:
             {
-                // https proxy
+                LOG_INFO("https proxy");
                 channel_->set_event(EPOLLOUT | EPOLLET);
                 break;
             }

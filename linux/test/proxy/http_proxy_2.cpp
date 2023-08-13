@@ -28,13 +28,13 @@ bool parseHttpRequest(const std::string& request, std::string& host, std::string
     //         }
     //     }
     // }
-    host = "www.stonejing.link";
+    host = "stonejing.link";
     port = "80";
     return true;
 }
 
 int main() {
-    const char* LISTEN_PORT = "8888"; // Port on which the proxy will listen
+    const char* LISTEN_PORT = "8000"; // Port on which the proxy will listen
 
     struct addrinfo hints, *res;
 
