@@ -5,7 +5,6 @@
 bool HttpProxy::sync_proxy()
 {
     struct addrinfo* destInfo;
-    cout << host_ << " " << http_port_ << endl;
 
     int status = getaddrinfo(host_.c_str(), http_port_.c_str(), &hints_, &destInfo);
     if (status != 0) {
@@ -29,8 +28,6 @@ bool HttpProxy::sync_proxy()
     }
 
     freeaddrinfo(destInfo);
-
-    // cout << "request: " << request_ << endl;
 
     send(destSocket, request_.c_str(), request_.size(), 0);
 

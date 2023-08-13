@@ -17,7 +17,7 @@ enum HTTP_CODE { NO_REQUEST = 0, GET_REQUEST, BAD_REQUEST,
 enum LINE_STATUS { LINE_OK  = 0, LINE_BAD, LINE_OPEN };
 
 #ifdef Debug
-    #define HOST "127.0.0.1:8008"
+    #define HOST "127.0.0.1:8000"
 #else
     #define HOST "http.stonejing.link"
 #endif
@@ -29,7 +29,10 @@ public:
 
     // append buffer to the end of the buffer_ and parse it
     void add_buffer(string&& inBuffer);
-
+    void add_buffer(string& inBuffer)
+    {
+        add_buffer(std::move(inBuffer));
+    }
     /*
        -1: parse error
         0: parse not finished

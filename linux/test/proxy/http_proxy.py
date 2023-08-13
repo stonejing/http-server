@@ -39,12 +39,10 @@ def handle_client(client_socket, target_host, target_port, username, password):
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.connect((webserver, port))
-    print(request)
     server_socket.send(request.encode())
 
     while True:
         response = server_socket.recv(4096)
-        print(response)
         if not response:
             break
         client_socket.send(response)

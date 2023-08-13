@@ -5,6 +5,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <udns.h>
 
 Http::Http(int epollfd, int fd) : sockfd_(fd), 
                     channel_(make_shared<Channel>(epollfd, fd)), 
@@ -29,6 +30,7 @@ void Http::handleRead()
 {
     if(bufferRead())
     {
+        request_.add_buffer(recv_buffer_);
         int ret = request_.get_parse_status();
         switch(ret)
         {
@@ -44,6 +46,14 @@ void Http::handleRead()
             case 2:
             {
                 LOG_INFO("http proxy");
+                request_.get_information(keep_alive_, URL_, headers_);
+                http_proxy_.set_request(recv_buffer_);
+                http_proxy_.set_information(headers_["host"], URL_);
+                
+                http_response_ = std::move(http_proxy_.get_response());
+
+                cout << http_response_ << endl;
+
                 channel_->set_event(EPOLLOUT | EPOLLET);
                 break;
             }
@@ -124,7 +134,7 @@ bool Http::bufferRead()
         {
             return false;
         }   
-        request_.add_buffer(std::string(buffer_.begin(), buffer_.begin() + bytes_read));
+        recv_buffer_.append(std::string(buffer_.begin(), buffer_.begin() + bytes_read));
     }
 }
 

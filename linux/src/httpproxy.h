@@ -48,6 +48,7 @@ public:
     {
         host_ = host;
         URL_ = URL;
+        response_.clear();
     }    
 
     void set_request(string& request)
@@ -58,7 +59,6 @@ public:
     string get_response()
     {
         sync_proxy();
-        cout << response_ << endl;
         return response_;
     }
      
@@ -67,6 +67,7 @@ public:
 private:
     string URL_;
     string host_;
+    bool connected_ = false;
     map<string, string> header_;
     string response_;
     string request_;

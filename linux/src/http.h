@@ -31,6 +31,9 @@ private:
     void HTTPWrite();
     void handleError();
 
+    void proxyRead();
+    void rpoxyWrite();
+
     /*
         set buffer_ size to 4096, append buffer_ to HTTP request     
     */
@@ -43,6 +46,7 @@ private:
     int epollfd_;
     
     vector<char> buffer_;
+    string recv_buffer_;
     string http_response_;
     int bytes_have_sent_ = 0;
 

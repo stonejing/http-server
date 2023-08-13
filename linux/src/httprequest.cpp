@@ -62,7 +62,7 @@ void HttpRequest::http_parse()
                     if(headers_.count("host"))
                     {
                         string host = headers_["host"];
-                        if(host == HOST)
+                        if(host != HOST)
                         {
                             status_ = 2;
                         }
