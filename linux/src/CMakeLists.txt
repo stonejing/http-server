@@ -1,3 +1,4 @@
+# link_libraries("-static")
 set(sources 
     main.cpp
     webserver.cpp
