@@ -18,7 +18,7 @@ public:
     Channel(int epollfd, int fd);
     ~Channel()
     {
-        LOG_INFO("remove channel: %d", fd);
+        LOG_INFO("remove channel: ", fd);
     }
 
     void handleEvent();

@@ -43,7 +43,7 @@ public:
     // 加锁性能什么的不重要，将所有的功能先正确的实现非常重要
     void setNewSocketFd(int fd)
     {
-        LOG_INFO("set new socket fd:", fd);
+        LOG_INFO("set new socket fd: ", fd);
         // create HTTP object at here
         std::lock_guard<std::mutex> socket_queue_lock(mut);
         socket_queue.push(fd);

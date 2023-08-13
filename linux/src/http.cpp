@@ -27,7 +27,6 @@ Http::Http(int epollfd, int fd) : sockfd_(fd),
 */
 void Http::handleRead()
 {
-    LOG_INFO("handle read");
     if(bufferRead())
     {
         int ret = request_.get_parse_status();
@@ -36,6 +35,9 @@ void Http::handleRead()
             case 1:
             {
                 LOG_INFO("http request");
+                request_.get_information(keep_alive_, URL_, headers_);
+                response_.set_information(keep_alive_, URL_);
+                http_response_ = std::move(response_.get_response());
                 channel_->set_event(EPOLLOUT | EPOLLET);
                 break;
             }
@@ -75,18 +77,13 @@ void Http::handleRead()
 
 void Http::HTTPWrite()
 {
-    LOG_INFO("handle HTTP write");
-    request_.get_information(keep_alive_, URL_, headers_);
-    response_.set_information(keep_alive_, URL_);
-    http_response_ = std::move(response_.get_response());
-
+    LOG_INFO("http write");
     if(bufferWrite())
     {
-        if(bytes_have_sent_ == http_response_.size())
+        if(bytes_have_sent_ == 0)
         {
             if(keep_alive_)
             {
-                LOG_INFO("keep alive");
                 channel_->set_event(EPOLLIN);
             }
             else
@@ -151,6 +148,10 @@ bool Http::bufferWrite()
         // only happends when ssize_t n == 0
         else if(bytes_send == 0) return false;
         bytes_have_sent_ += bytes_send;
-        if(bytes_have_sent_ == http_response_.size()) return true;
+        if(bytes_have_sent_ == http_response_.size())
+        {
+            bytes_have_sent_ = 0;
+            return true;
+        }
     }  
 }

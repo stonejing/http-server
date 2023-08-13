@@ -43,11 +43,6 @@ public:
         return status_;
     }
 
-    string get_request()
-    {
-        return buffer_;
-    }
-
     void get_information(bool& keep_alive, string& URL, map<string, string>& headers);
 
 private:
@@ -69,6 +64,7 @@ private:
         buffer_.clear();
         start_pos_ = 0;
         headers_.clear();
+        state_ = STATE_REQUEST_LINE;
     }
 
     string buffer_{};                     // buffer that should be parsed

@@ -6,7 +6,6 @@ string METHOD[8] = {"GET", "POST", "HEAD", "PUT", "DELETE", "TRACE", "OPTIONS", 
 void HttpRequest::add_buffer(string&& inBuffer)
 {
     buffer_.append(inBuffer);
-    cout << buffer_ << endl;
 }
 
 void HttpRequest::http_parse()
@@ -97,7 +96,7 @@ void HttpRequest::http_parse()
 
 void HttpRequest::get_information(bool& keep_alive, string& URL, map<string, string>& headers)
 {
-    keep_alive_ = keep_alive;
+    keep_alive = keep_alive_;
     URL = URL_;
     headers = headers_;
     request_reset();

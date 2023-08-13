@@ -37,7 +37,7 @@ public:
         status_line_map_[404] = error_404_title;
         status_line_map_[500] = error_500_title;
         root_path_ = std::filesystem::current_path().string() + "/../../../resource";
-        cout << root_path_ << endl;
+        cout << "resource path: " << root_path_ << endl;
     }
 
     string& get_response() 
