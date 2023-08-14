@@ -5,7 +5,7 @@ Channel::Channel(int epollfd, int fd) :
         epollfd(epollfd), 
         event(0)
 {
-
+    // LOG_INFO("add channel: ", fd);
 }
 
 void Channel::handleEvent()

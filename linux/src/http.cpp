@@ -8,10 +8,11 @@
 #include <udns.h>
 
 Http::Http(int epollfd, int fd) : sockfd_(fd), 
-                    channel_(make_shared<Channel>(epollfd, fd)), 
+                    channel_(std::make_unique<Channel>(epollfd, fd)),
                     buffer_(std::vector<char>(8096)),
                     epollfd_(epollfd)
 {
+    LOG_INFO("http constructed");
     channel_->set_event(EPOLLIN);
     channel_->set_read_callback(std::bind(&Http::handleRead, this));
     channel_->set_write_callback(std::bind(&Http::HTTPWrite, this));
@@ -28,6 +29,7 @@ Http::Http(int epollfd, int fd) : sockfd_(fd),
 */
 void Http::handleRead()
 {
+    // LOG_INFO("handle read");
     if(bufferRead())
     {
         request_.add_buffer(recv_buffer_);
@@ -37,7 +39,9 @@ void Http::handleRead()
             case 1:
             {
                 LOG_INFO("http request");
+                recv_buffer_.clear();
                 request_.get_information(keep_alive_, URL_, headers_);
+                keep_alive_ = false;
                 response_.set_information(keep_alive_, URL_);
                 http_response_ = std::move(response_.get_response());
                 channel_->set_event(EPOLLOUT | EPOLLET);
@@ -47,19 +51,20 @@ void Http::handleRead()
             {
                 LOG_INFO("http proxy");
                 request_.get_information(keep_alive_, URL_, headers_);
+                keep_alive_ = false;
+
                 http_proxy_.set_request(recv_buffer_);
+                recv_buffer_.clear();
                 http_proxy_.set_information(headers_["host"], URL_);
                 
                 http_response_ = std::move(http_proxy_.get_response());
-
-                cout << http_response_ << endl;
 
                 channel_->set_event(EPOLLOUT | EPOLLET);
                 break;
             }
             case 3:
             {
-                LOG_INFO("https proxy");
+                // LOG_INFO("https proxy");
                 channel_->set_event(EPOLLOUT | EPOLLET);
                 break;
             }
@@ -87,7 +92,7 @@ void Http::handleRead()
 
 void Http::HTTPWrite()
 {
-    LOG_INFO("http write");
+    // LOG_INFO("http write");
     if(bufferWrite())
     {
         if(bytes_have_sent_ == 0)
@@ -98,13 +103,13 @@ void Http::HTTPWrite()
             }
             else
             {
-                LOG_INFO("close connection");
+                LOG_INFO("close connection: ", sockfd_);
                 epollDelFd(epollfd_, sockfd_);
             }
         }
         else
         {
-            LOG_INFO("http write buffer not finished");
+            LOG_WARN("http write buffer not finished");
             return;
         }
     }

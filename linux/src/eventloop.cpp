@@ -27,8 +27,8 @@ void EventLoop::loop()
             }
             else 
             {
-                // LOG_INFO("event handle epoll event: %d", sockfd);
-                socket_http_map[sockfd]->get_channel()->handleEvent();
+                // LOG_INFO("event handle epoll event: ", sockfd);
+                socket_http_map[sockfd]->handle_event();
             }
         }
     } 

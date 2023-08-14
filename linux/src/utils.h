@@ -141,5 +141,4 @@ inline void epollModFd(int epollfd, int fd, int ev)
 inline void epollDelFd(int epollfd, int fd)
 {
     epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, 0);
-    close(fd);
 }

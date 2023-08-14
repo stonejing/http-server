@@ -16,7 +16,6 @@ int socket_bind_listen_tcp_v4(int port)
         LOG_ERR("server create socket fd: ", listen_fd);
         return -1;
     }
-    LOG_INFO("server create socket fd: ", listen_fd);
 
     reusesocket(listen_fd);
     
@@ -30,7 +29,6 @@ int socket_bind_listen_tcp_v4(int port)
         LOG_ERR("server bind err: ", listen_fd);
         return -1;
     }
-    LOG_INFO("server bind socket: ", listen_fd);
     
     if(listen(listen_fd, 5) == -1)
     {

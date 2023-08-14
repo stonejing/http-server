@@ -50,11 +50,9 @@ public:
         return false;
     }
 
-    // 并不是线程安全，但是调用这个函数的不是多线程
     std::shared_ptr<EventLoop> getNextLoop()
     {
         next = (next + 1) % thread_numbers;
-        LOG_INFO("get ", next, "th thread.");
         return loops[next];
     }
 

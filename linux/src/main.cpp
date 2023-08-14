@@ -29,10 +29,5 @@ int main(void)
     t1.detach();
     LOG_INFO("main start http server");
 
-    // http_server.serverAcceptStart();
-    // Webserver http_proxy_server(1, 8001);
-    // std::thread t2(std::bind(&Webserver::serverAcceptStart, &http_proxy_server));
-    // t2.detach();
-    // LOG_INFO("main start http proxy server");
     return 0;
 }

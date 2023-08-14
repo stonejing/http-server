@@ -1,5 +1,7 @@
 #include "webserver.h"
+#include "httpresponse.h"
 #include "utils.h"
+#include <asm-generic/errno.h>
 #include <errno.h>
 
 Webserver::Webserver(int thread_num, int port) : 
@@ -20,8 +22,6 @@ void Webserver::serverAcceptStart()
     fd_set read_fd;
     FD_ZERO(&read_fd);
 
-    LOG_INFO("start serverAcceptStart");
-
     while(!quit)
     {
         FD_SET(listen_fd, &read_fd);
@@ -36,7 +36,7 @@ void Webserver::serverAcceptStart()
             int accept_fd = accept(listen_fd, (struct sockaddr*)&client_address, &client_addr_len);
             if(accept_fd <= 0)
             {
-                LOG_WARN("accept failure");
+                LOG_WARN("accept failure ", errno);
                 continue;
             }
             setnonblocking(accept_fd);

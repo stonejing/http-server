@@ -94,8 +94,8 @@ public:
         std::ostringstream oss;
         oss << "\033[32;1m[INFO]\033[0m\033[34m(" << file_name << ":" << file_line << ")\033[0m ";
         oss << get_time_stamp_c();
-        oss << " " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << " ";
-        oss << format;
+        // oss << " " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << " ";
+        oss << " " << format;
         // Use the stream to format the arguments
         if constexpr (sizeof...(args) > 0) {
             (oss << ... << args);
@@ -154,8 +154,8 @@ public:
         std::ostringstream oss;
         oss << "\033[31;1m[ERR]\033[0m\033[34m(" << file_name << ":" << file_line << ")\033[0m ";
         oss << get_time_stamp_c();
-        oss << " " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << " ";
-        oss << format;
+        // oss << " " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << " ";
+        oss << " " << format;
         // Use the stream to format the arguments
         if constexpr (sizeof...(args) > 0) {
             (oss << ... << args);

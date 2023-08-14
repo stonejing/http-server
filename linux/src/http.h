@@ -18,12 +18,13 @@ public:
     Http(int epollfd, int fd);
     ~Http()
     {
-        LOG_INFO("Http destructed");
+        close(sockfd_);
+        LOG_INFO("http destructed");
     }
 
-    std::shared_ptr<Channel> get_channel()
+    void handle_event()
     {
-        return channel_;
+        channel_->handleEvent();
     }
 
 private:    
@@ -32,16 +33,14 @@ private:
     void handleError();
 
     void proxyRead();
-    void rpoxyWrite();
+    void proxyWrite();
 
-    /*
-        set buffer_ size to 4096, append buffer_ to HTTP request     
-    */
+    // set buffer_ size to 4096, append buffer_ to HTTP request     
     bool bufferRead();
     bool bufferWrite();
 
 private:
-    std::shared_ptr<Channel> channel_; 
+    std::unique_ptr<Channel> channel_; 
     int sockfd_;
     int epollfd_;
     

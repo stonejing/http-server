@@ -40,7 +40,7 @@ bool HttpProxy::sync_proxy()
         if (bytesReceived <= 0) {
             break;
         }
-        response_ += buffer;
+        response_ += std::string(buffer, bytesReceived);
     }
     return true;
 }
