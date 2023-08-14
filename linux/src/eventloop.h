@@ -45,7 +45,6 @@ public:
         LOG_INFO("set new socket fd: ", fd);
         std::lock_guard<std::mutex> socket_queue_lock(mut);
         socket_queue.push(fd);
-        socket_http_map[fd] = make_unique<Http>(epollfd, fd);
         eventfd_write(evfd, 1);
     }
 
@@ -54,7 +53,18 @@ public:
         std::lock_guard<std::mutex> lock(mut);
         while(!socket_queue.empty())
         {
-            epollAddFd(epollfd, socket_queue.front());
+            int fd = socket_queue.front();
+            // 为什么这里不能用make_unique，会导致 accept faulure: Bad file descriptor
+            // HTTP 类创建了就不删除了，只是将其初始化
+            if(socket_http_map.count(fd))
+            {
+                socket_http_map[fd]->init();
+            }
+            else 
+            {
+                socket_http_map[fd] = std::make_unique<Http>(epollfd, fd);
+            }
+            epollAddFd(epollfd, fd);
             socket_queue.pop();
         }
     }

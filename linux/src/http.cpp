@@ -29,7 +29,7 @@ Http::Http(int epollfd, int fd) : sockfd_(fd),
 */
 void Http::handleRead()
 {
-    // LOG_INFO("handle read");
+    LOG_INFO("handle read ", sockfd_);
     if(bufferRead())
     {
         request_.add_buffer(recv_buffer_);
@@ -41,7 +41,6 @@ void Http::handleRead()
                 LOG_INFO("http request");
                 recv_buffer_.clear();
                 request_.get_information(keep_alive_, URL_, headers_);
-                keep_alive_ = false;
                 response_.set_information(keep_alive_, URL_);
                 http_response_ = std::move(response_.get_response());
                 channel_->set_event(EPOLLOUT | EPOLLET);
@@ -52,7 +51,6 @@ void Http::handleRead()
                 LOG_INFO("http proxy");
                 request_.get_information(keep_alive_, URL_, headers_);
                 keep_alive_ = false;
-
                 http_proxy_.set_request(recv_buffer_);
                 recv_buffer_.clear();
                 http_proxy_.set_information(headers_["host"], URL_);

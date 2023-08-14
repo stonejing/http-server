@@ -36,7 +36,7 @@ void Webserver::serverAcceptStart()
             int accept_fd = accept(listen_fd, (struct sockaddr*)&client_address, &client_addr_len);
             if(accept_fd <= 0)
             {
-                LOG_WARN("accept failure ", errno);
+                LOG_WARN("accept failure ", errno, accept_fd);
                 continue;
             }
             setnonblocking(accept_fd);

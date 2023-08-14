@@ -18,8 +18,14 @@ public:
     Http(int epollfd, int fd);
     ~Http()
     {
-        close(sockfd_);
         LOG_INFO("http destructed");
+    }
+    void init()
+    {
+        LOG_INFO("http init");
+        channel_->set_event(EPOLLIN);
+        channel_->set_read_callback(std::bind(&Http::handleRead, this));
+        channel_->set_write_callback(std::bind(&Http::HTTPWrite, this));
     }
 
     void handle_event()

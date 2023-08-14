@@ -42,5 +42,6 @@ bool HttpProxy::sync_proxy()
         }
         response_ += std::string(buffer, bytesReceived);
     }
+    close(destSocket);
     return true;
 }

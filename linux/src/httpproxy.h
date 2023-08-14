@@ -41,7 +41,7 @@ public:
          
     ~HttpProxy() 
     { 
-        close(connect_socket_); 
+        // close(connect_socket_); 
     }
 
     void set_information(string& host, string& URL)
