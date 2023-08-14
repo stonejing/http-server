@@ -19,7 +19,7 @@ enum LINE_STATUS { LINE_OK  = 0, LINE_BAD, LINE_OPEN };
 #ifdef Debug
     #define HOST "127.0.0.1:8000"
 #else
-    #define HOST "http.stonejing.link"
+    #define HOST "www.stonejing.link"
 #endif
 
 class HttpRequest
