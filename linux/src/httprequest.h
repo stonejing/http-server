@@ -22,6 +22,8 @@ enum LINE_STATUS { LINE_OK  = 0, LINE_BAD, LINE_OPEN };
     #define HOST "www.stonejing.link"
 #endif
 
+#define HTTP_HOST "http.stonejing.link"
+
 class HttpRequest
 {
 public:
