@@ -38,7 +38,7 @@ int main() {
     FD_ZERO(&read_set);
     FD_ZERO(&write_set);
     FD_SET(sockfd, &read_set);
-    // FD_SET(sockfd, &write_set);
+    FD_SET(sockfd, &write_set);
 
     struct dns_query* query = dns_submit_a4(ctx, "www.google.com", 0, queryCallback, NULL);
     if(!query)
@@ -53,6 +53,10 @@ int main() {
 
     while(true)
     {
+        FD_ZERO(&read_set);
+        FD_ZERO(&write_set);
+        FD_SET(sockfd, &read_set);
+        FD_SET(sockfd, &write_set);
         int ret = select(sockfd + 1, &read_set, &write_set, NULL, NULL);
         if(ret < 0)
         {
@@ -61,13 +65,13 @@ int main() {
         }
         if(FD_ISSET(sockfd, &write_set))
         {
-            dns_ioevent(ctx, 0);
-            cout << "IO EVENT." << endl;
+            dns_ioevent(ctx, 5);
+            cout << "WRITE IO EVENT." << endl;
         }
         if(FD_ISSET(sockfd, &read_set))
         {
-            dns_ioevent(ctx, 0);
-            cout << "IO EVENT." << endl;
+            dns_ioevent(ctx, 5);
+            cout << "READ IO EVENT." << endl;
         }
     }
 

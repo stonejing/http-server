@@ -12,7 +12,8 @@ using std::string;
 
 int main(void)
 {
-    int thread_num = 8;
+    int thread_num = 1;
+    
 #ifdef Debug
     int port = 8000;
 #else
@@ -24,7 +25,7 @@ int main(void)
     CLogger& Log = CLogger::getInstance();
     Log.init(log_path);
 
-    Webserver http_server(1, port);
+    Webserver http_server(thread_num, port);
     std::thread t1(std::bind(&Webserver::serverAcceptStart, &http_server));
     t1.detach();
     LOG_INFO("main start http server");

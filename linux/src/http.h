@@ -1,8 +1,12 @@
+#pragma once
+
 #include "log.h"
-#include "channel.h"
 #include "httprequest.h"
 #include "httpresponse.h"
 #include "httpproxy.h"
+
+#include "eventloop.h"
+#include "channel.h"
 
 #include <future>
 #include <vector>
@@ -12,28 +16,21 @@
 
 const int BUFFER_SIZE = 4096;
 
+class EventLoop;
+class Channel;
+
 class Http
 {
 public: 
-    Http(int epollfd, int fd);
+    Http(EventLoop* loop, int fd);
     ~Http()
     {
         LOG_INFO("http destructed");
     }
-    void init()
-    {
-        LOG_INFO("http init");
-        channel_->set_event(EPOLLIN);
-        channel_->set_read_callback(std::bind(&Http::handleRead, this));
-        channel_->set_write_callback(std::bind(&Http::HTTPWrite, this));
-    }
-
-    void handle_event()
-    {
-        channel_->handleEvent();
-    }
-
-private:    
+    void init();
+    void handle_event();
+    void registerChannel();
+public:
     void handleRead();
     void HTTPWrite();
     void handleError();
@@ -46,9 +43,12 @@ private:
     bool bufferWrite();
 
 private:
-    std::unique_ptr<Channel> channel_; 
+    std::shared_ptr<Channel> channel_; 
+
     int sockfd_;
     int epollfd_;
+
+    EventLoop* loop_;
     
     vector<char> buffer_;
     string recv_buffer_;

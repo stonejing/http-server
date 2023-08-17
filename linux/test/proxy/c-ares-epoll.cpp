@@ -111,13 +111,28 @@ int main(void)
         printf("ares_init error.\n");
         return 0;
     }
+
+    struct ares_options options;
+    int optmask = ARES_OPT_FLAGS;
+    options.flags = ARES_FLAG_NOCHECKRESP;
+    options.flags |= ARES_FLAG_STAYOPEN;
+    options.flags |= ARES_FLAG_IGNTC; // UDP only
+
+    int status = ares_init_options(&channel, &options, optmask);
+    if(status != ARES_SUCCESS)
+    {
+        cout << "ares_init_options error: " << ares_strerror(status) << endl;
+        return 0;
+    }
+
     struct sockaddr_in sa = {};
     string domain = "www.google.com";
     dns_res_t res = {NULL, &sa.sin_addr.s_addr, sizeof(sa.sin_addr.s_addr)};
-    ares_gethostbyname(channel, domain.c_str(), AF_INET, dns_callback, &res);
+    // ares_gethostbyname(channel, domain.c_str(), AF_INET, dns_callback, &res);
     ares_gethostbyname(channel, "www.example.com", AF_INET, dns_callback, &res);
     ares_gethostbyname(channel, "www.google.com", AF_INET, dns_callback, &res);
     ares_gethostbyname(channel, "www.stonejing.link", AF_INET, dns_callback, &res); 
+    ares_gethostbyname(channel, "http.stonejing.link", AF_INET, dns_callback, &res);
     ares_gethostbyname(channel, "www.baidu.com", AF_INET, dns_callback, &res);
     ares_gethostbyname(channel, "www.sina.com", AF_INET, dns_callback, &res);
     ares_gethostbyname(channel, "www.qq.com", AF_INET, dns_callback, &res);
@@ -130,31 +145,22 @@ int main(void)
     ares_gethostbyname(channel, "www.suning.com", AF_INET, dns_callback, &res);
     ares_socket_t socks[ARES_GETSOCK_MAXNUM];
     int dns_sockfd;
-    // int bitmask = ares_getsock(channel, socks, 1);
-    // for (int i = 0; i < ARES_GETSOCK_MAXNUM; i++)
-    // {
-    //     dns_sockfd = socks[0];
-    //     if (ARES_GETSOCK_READABLE(bitmask, i))
-    //     {
-    //         addInFd(epollfd, socks[i], true);
-    //     }
-    //     if (ARES_GETSOCK_WRITABLE(bitmask, i))
-    //     {
-    //         addOutFd(epollfd, socks[i]);
-    //     }
-    // }
+    int bitmask = ares_getsock(channel, socks, ARES_GETSOCK_MAXNUM);
+    for (int i = 0; i < ARES_GETSOCK_MAXNUM; i++)
+    {
+        dns_sockfd = socks[0];
+        if (ARES_GETSOCK_READABLE(bitmask, i))
+        {
+            addInFd(epollfd, socks[i], true);
+        }
+        if (ARES_GETSOCK_WRITABLE(bitmask, i))
+        {
+            addOutFd(epollfd, socks[i]);
+        }
+    }
     
     while(1)
     {
-        int bitmask = ares_getsock(channel, socks, ARES_GETSOCK_MAXNUM);
-        for (int i = 0; i < ARES_GETSOCK_MAXNUM; i++)
-        {
-            if (ARES_GETSOCK_READABLE(bitmask, i))
-            {
-                dns_sockfd = socks[i];
-                addInFd(epollfd, socks[i], true);
-            }
-        }  
         int ret = epoll_wait(epollfd, events, MAX_EVENT_NUMBER, -1);
         if(ret < 0)
         {
@@ -190,13 +196,8 @@ int main(void)
                     // printf("Read from input: %s", buffer);
                 }
                 string host(buffer, buffer+num_read-1);
-                cout << host;
+                cout << "input host: " << host << endl;
                 ares_gethostbyname(channel, host.c_str(), AF_INET, dns_callback, &res);
-                ares_gethostbyname(channel, "www.example.com", AF_INET, dns_callback, &res);
-                ares_gethostbyname(channel, "www.google.com", AF_INET, dns_callback, &res);
-                ares_gethostbyname(channel, "www.stonejing.link", AF_INET, dns_callback, &res); 
-                int socknew = socket(AF_INET, SOCK_STREAM, 0);
-                cout << "socknew: " << socknew << endl;
             }
             else if(sockfd == dns_sockfd)
             {

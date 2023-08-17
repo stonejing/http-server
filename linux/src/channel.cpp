@@ -1,11 +1,24 @@
 #include "channel.h"
 
-Channel::Channel(int epollfd, int fd) : 
+Channel::Channel(EventLoop* loop, int fd) : 
         fd(fd), 
-        epollfd(epollfd), 
-        event(0)
+        loop_(loop)
 {
     // LOG_INFO("add channel: ", fd);
+}
+
+int Channel::get_event()
+{
+    return event;
+}
+void Channel::add_event()
+{
+    loop_->epollAddFd(fd);
+}
+void Channel::set_event(int ev)
+{
+    loop_->epollModFd(fd, ev);
+    event = ev;
 }
 
 void Channel::handleEvent()

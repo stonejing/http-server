@@ -121,25 +121,3 @@ inline void handle_for_sigpipe()
     if(sigaction(SIGPIPE, &sa, NULL)) 
         return;
 }
-
-inline void epollAddFd(int epollfd, int fd)
-{
-    epoll_event event;
-    event.data.fd = fd;
-    event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
-    epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event);
-}
-
-inline void epollModFd(int epollfd, int fd, int ev)
-{
-    epoll_event event;
-    event.data.fd = fd;
-    event.events = ev | EPOLLRDHUP;
-    epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event);
-}
-
-inline void epollDelFd(int epollfd, int fd)
-{
-    epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, 0);
-    close(fd);
-}

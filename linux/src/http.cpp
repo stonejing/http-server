@@ -1,22 +1,37 @@
 #include "http.h"
-#include "httpproxy.h"
-#include "utils.h"
-#include <cerrno>
-#include <sys/epoll.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <udns.h>
 
-Http::Http(int epollfd, int fd) : sockfd_(fd), 
-                    channel_(std::make_unique<Channel>(epollfd, fd)),
+class EventLoop;
+
+Http::Http(EventLoop* loop, int fd) : sockfd_(fd), 
                     buffer_(std::vector<char>(8096)),
-                    epollfd_(epollfd)
+                    channel_(std::make_shared<Channel>(loop, fd)),
+                    loop_(loop)
 {
     LOG_INFO("http constructed");
     channel_->set_event(EPOLLIN);
     channel_->set_read_callback(std::bind(&Http::handleRead, this));
     channel_->set_write_callback(std::bind(&Http::HTTPWrite, this));
-    // channel->set_error_callback(std::bind(&Http::handleError, this));
+    loop_->test();
+    // channel_->set_error_callback(std::bind(&Http::handleError, this));
+}
+
+void Http::registerChannel()
+{
+    cout << "http register channel" << endl;
+    loop_->setNewChannel(sockfd_, channel_);
+}
+
+void Http::init()
+{
+    LOG_INFO("http init");
+    channel_->set_event(EPOLLIN);
+    channel_->set_read_callback(std::bind(&Http::handleRead, this));
+    channel_->set_write_callback(std::bind(&Http::HTTPWrite, this));
+}
+
+void Http::handle_event()
+{
+    channel_->handleEvent();
 }
 
 /*
@@ -30,6 +45,7 @@ Http::Http(int epollfd, int fd) : sockfd_(fd),
 void Http::handleRead()
 {
     LOG_INFO("handle read ", sockfd_);
+    
     if(bufferRead())
     {
         request_.add_buffer(recv_buffer_);
@@ -70,7 +86,7 @@ void Http::handleRead()
             {
                 // parse error
                 LOG_ERR("http request error, epoll delte sockfd: ", sockfd_);
-                epollDelFd(epollfd_, sockfd_);
+                loop_->epollDelFd(sockfd_);
                 break;
             }
             case 0:
@@ -84,7 +100,7 @@ void Http::handleRead()
     else
     {
         LOG_ERR("http read error, epoll delte sockfd: ", sockfd_);
-        epollDelFd(epollfd_, sockfd_);
+        loop_->epollDelFd(sockfd_);
     }
 }
 
@@ -102,7 +118,7 @@ void Http::HTTPWrite()
             else
             {
                 LOG_INFO("close connection: ", sockfd_);
-                epollDelFd(epollfd_, sockfd_);
+                loop_->epollDelFd(sockfd_);
             }
         }
         else
@@ -114,7 +130,7 @@ void Http::HTTPWrite()
     else
     {
         LOG_ERR("http write error, epoll delte sockfd ", sockfd_);
-        epollDelFd(epollfd_, sockfd_);
+        loop_->epollDelFd(sockfd_);
     }
 }
 

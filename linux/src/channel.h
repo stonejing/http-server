@@ -2,20 +2,21 @@
 
 #include <functional>
 #include <memory>
-
 #include <sys/epoll.h>
 
 #include "log.h"
+#include "eventloop.h"
 #include "utils.h"
 
 class EventLoop;
+class Http;
 
 class Channel
 {
 public:
     using EventCallback = std::function<void()>;
 
-    Channel(int epollfd, int fd);
+    Channel(EventLoop* loop, int fd);
     ~Channel()
     {
         // LOG_INFO("remove channel: ", fd);
@@ -34,23 +35,14 @@ public:
     {
         error_callback = cb;
     }
-    int get_event()
-    {
-        return event;
-    }
-    void add_event()
-    {
-        epollAddFd(epollfd, fd);
-    }
-    void set_event(int ev)
-    {
-        epollModFd(epollfd, fd, ev);
-        event = ev;
-    }
+
+    int get_event();
+    void add_event();
+    void set_event(int ev);
 
 private:
     CLogger& Log = CLogger::getInstance();
-
+    EventLoop* loop_;
     int fd;
     int epollfd;
     int event;

@@ -13,72 +13,66 @@
 #include <queue>
 #include <string>
 #include <map>
-
 #include <unistd.h>
-#include <sys/epoll.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 
-#include "log.h"
 #include "http.h"
+#include "channel.h"
+#include "log.h"
 #include "utils.h"
 
 #define MAX_EVENT_NUMBER 5000
 
+class Channel;
+class Http;
+
 class EventLoop
 {
 public:
-    EventLoop() : epollfd(epoll_create1(EPOLL_CLOEXEC)), evfd(eventfd(0, EFD_NONBLOCK))
+    EventLoop() : 
+        epollfd_(epoll_create1(EPOLL_CLOEXEC)), 
+        evfd_(eventfd(0, EFD_NONBLOCK)),
+        socket_channel_map_()
     {
 
     }
 
     ~EventLoop()
     {
-        LOG_INFO("event loop released close epollfd:", epollfd);
-        close(epollfd);
-        close(evfd);
+        LOG_INFO("event loop released close epollfd:", epollfd_);
+        close(epollfd_);
+        close(evfd_);
     }
+    void setNewChannel(int fd, std::shared_ptr<Channel> channel);
 
-    void setNewSocketFd(int fd)
+    void test()
     {
-        LOG_INFO("set new socket fd: ", fd);
-        std::lock_guard<std::mutex> socket_queue_lock(mut);
-        socket_queue.push(fd);
-        eventfd_write(evfd, 1);
+        cout << "loop test" << endl;
     }
 
-    void handleSocketQueue()
+    void delChannel(int fd)
     {
-        std::lock_guard<std::mutex> lock(mut);
-        while(!socket_queue.empty())
-        {
-            int fd = socket_queue.front();
-            // 为什么这里不能用make_unique，会导致 accept faulure: Bad file descriptor
-            // HTTP 类创建了就不删除了，只是将其初始化
-            if(socket_http_map.count(fd))
-            {
-                socket_http_map[fd]->init();
-            }
-            else 
-            {
-                socket_http_map[fd] = std::make_unique<Http>(epollfd, fd);
-            }
-            epollAddFd(epollfd, fd);
-            socket_queue.pop();
-        }
+        socket_channel_map_.erase(fd);
+        epollDelFd(fd);
     }
 
+    void setNewSocket(int fd);
+    void handleSocketQueue();
     void loop(); 
+    void epollAddFd(int fd);
+    void epollModFd(int fd, int ev);
+    void epollDelFd(int fd);
 
 private:
     CLogger& Log = CLogger::getInstance();
+    EventLoop* loop_;
+    std::mutex mut_;
+    queue<int> socket_queue_;
+    std::map<int, std::unique_ptr<Http>> socket_http_map_;
+    std::map<int, std::shared_ptr<Channel>> socket_channel_map_;
 
-    std::mutex mut;
-    queue<int> socket_queue;
-    std::map<int, std::unique_ptr<Http>> socket_http_map;
-
-    int epollfd;
-    epoll_event events[MAX_EVENT_NUMBER];
-    int evfd;       // eventfd
+    epoll_event events_[MAX_EVENT_NUMBER];
+    int epollfd_;
+    int evfd_;
 };

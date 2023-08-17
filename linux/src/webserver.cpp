@@ -1,8 +1,5 @@
 #include "webserver.h"
-#include "httpresponse.h"
-#include "utils.h"
-#include <asm-generic/errno.h>
-#include <errno.h>
+#include "channel.h"
 
 Webserver::Webserver(int thread_num, int port) : 
     listen_fd(socket_bind_listen_tcp_v4(port)),
@@ -12,6 +9,12 @@ Webserver::Webserver(int thread_num, int port) :
     handle_for_sigpipe();
 
     if(threadpool->threadPoolStatus()) quit = false;
+}
+
+void Webserver::handleNewConnection(int accept_fd)
+{
+    std::shared_ptr<EventLoop> loop = threadpool->getNextLoop();
+    loop->setNewSocket(accept_fd);
 }
 
 void Webserver::serverAcceptStart()
