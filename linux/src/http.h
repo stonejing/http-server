@@ -26,7 +26,9 @@ public:
     ~Http()
     {
         LOG_INFO("http destructed");
+        close(sockfd_);
     }
+    
     void init();
     void handle_event();
     void registerChannel();

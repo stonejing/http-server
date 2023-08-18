@@ -27,6 +27,7 @@ void Webserver::serverAcceptStart()
 
     while(!quit)
     {
+        FD_ZERO(&read_fd);
         FD_SET(listen_fd, &read_fd);
         int ret = select(listen_fd + 1, &read_fd, NULL, NULL, NULL);
         if(ret < 0)

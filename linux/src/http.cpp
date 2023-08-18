@@ -8,23 +8,21 @@ Http::Http(EventLoop* loop, int fd) : sockfd_(fd),
                     loop_(loop)
 {
     LOG_INFO("http constructed");
-    channel_->set_event(EPOLLIN);
+    channel_->set_read();
     channel_->set_read_callback(std::bind(&Http::handleRead, this));
     channel_->set_write_callback(std::bind(&Http::HTTPWrite, this));
-    loop_->test();
     // channel_->set_error_callback(std::bind(&Http::handleError, this));
 }
 
 void Http::registerChannel()
 {
-    cout << "http register channel" << endl;
     loop_->setNewChannel(sockfd_, channel_);
 }
 
 void Http::init()
 {
     LOG_INFO("http init");
-    channel_->set_event(EPOLLIN);
+    channel_->set_read();
     channel_->set_read_callback(std::bind(&Http::handleRead, this));
     channel_->set_write_callback(std::bind(&Http::HTTPWrite, this));
 }
@@ -59,7 +57,7 @@ void Http::handleRead()
                 request_.get_information(keep_alive_, URL_, headers_);
                 response_.set_information(keep_alive_, URL_);
                 http_response_ = std::move(response_.get_response());
-                channel_->set_event(EPOLLOUT | EPOLLET);
+                channel_->set_write();
                 break;
             }
             case 2:
@@ -73,13 +71,13 @@ void Http::handleRead()
                 
                 http_response_ = std::move(http_proxy_.get_response());
 
-                channel_->set_event(EPOLLOUT | EPOLLET);
+                channel_->set_write();
                 break;
             }
             case 3:
             {
                 // LOG_INFO("https proxy");
-                channel_->set_event(EPOLLOUT | EPOLLET);
+                channel_->set_write();
                 break;
             }
             case -1:
@@ -92,7 +90,7 @@ void Http::handleRead()
             case 0:
             {
                 // parse not finished
-                channel_->set_event(EPOLLIN);
+                channel_->set_read();
                 break;
             }
         }
@@ -113,7 +111,7 @@ void Http::HTTPWrite()
         {
             if(keep_alive_)
             {
-                channel_->set_event(EPOLLIN);
+                channel_->set_read();
             }
             else
             {
@@ -169,7 +167,7 @@ bool Http::bufferWrite()
             if(errno == EAGAIN || errno == EWOULDBLOCK)
             {
                 // remain buffer to write
-                channel_->set_event(EPOLLOUT | EPOLLET);
+                channel_->set_write();
                 return true;
             }
             return false;

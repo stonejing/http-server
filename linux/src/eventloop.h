@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+#include <ares.h>
 
 #include "http.h"
 #include "channel.h"
@@ -30,13 +31,7 @@ class Http;
 class EventLoop
 {
 public:
-    EventLoop() : 
-        epollfd_(epoll_create1(EPOLL_CLOEXEC)), 
-        evfd_(eventfd(0, EFD_NONBLOCK)),
-        socket_channel_map_()
-    {
-
-    }
+    EventLoop();
 
     ~EventLoop()
     {
@@ -44,18 +39,24 @@ public:
         close(epollfd_);
         close(evfd_);
     }
+
+    static int ares_socket_create_callback(int sock, int type, void *data);
+
+    static void dns_callback(void* arg, int status, int timeouts, struct hostent* host)
+    {
+        if (status == ARES_SUCCESS)
+        {
+            puts(host->h_name);
+            puts(inet_ntoa(*(struct in_addr*)host->h_addr));
+        }
+        else
+            std::cout << "lookup failed: " << ares_strerror(status) << std::endl;
+    }
+
+    void setDnsChannel(int sock);
+    void handleDnsRead(int sock);
+
     void setNewChannel(int fd, std::shared_ptr<Channel> channel);
-
-    void test()
-    {
-        cout << "loop test" << endl;
-    }
-
-    void delChannel(int fd)
-    {
-        socket_channel_map_.erase(fd);
-        epollDelFd(fd);
-    }
 
     void setNewSocket(int fd);
     void handleSocketQueue();
@@ -75,4 +76,6 @@ private:
     epoll_event events_[MAX_EVENT_NUMBER];
     int epollfd_;
     int evfd_;
+    // DNS query
+    ares_channel ares_channel_;
 };

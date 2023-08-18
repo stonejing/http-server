@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <memory>
 
 using namespace std;
 
@@ -78,8 +79,54 @@ void addOutFd(int epollfd, int fd)
     setnonblocking(fd);
 }
 
+int ares_socket_create_callback(int sock, int type, void *data)
+{
+    cout << "socket create callback: " << sock << endl;
+    return 0;
+}
+
+class CreateAres
+{
+public:
+    CreateAres() : 
+        ares_channel_(NULL)
+    {
+        struct ares_options options;
+        int optmask = ARES_OPT_FLAGS;
+        options.flags = ARES_FLAG_NOCHECKRESP;
+        options.flags |= ARES_FLAG_STAYOPEN;
+        options.flags |= ARES_FLAG_IGNTC; // UDP only
+        
+        int status = ares_init_options(&ares_channel_, &options, optmask);
+        if(status != ARES_SUCCESS)
+        {
+            cout << "ares_init_options error: " << ares_strerror(status) << endl;
+            assert(0);
+        }
+        cout << "succeed" << endl;
+    }
+
+    
+    static int ares_socket_create_callback(int sock, int type, void *data)
+    {
+        cout << "create ares socket create callback: " << sock << endl;
+        return 0;
+    }
+    
+    void query()
+    {
+        ares_gethostbyname(ares_channel_, "example.com", AF_INET, NULL, NULL);
+    }
+
+private:
+    ares_channel ares_channel_;
+};
+
 int main(void)
 {
+    shared_ptr<CreateAres> create_ares = make_shared<CreateAres>();
+    create_ares->query();
+
     int ret = 0;
     struct sockaddr_in address;
     bzero(&address, sizeof(address));
@@ -104,13 +151,13 @@ int main(void)
     assert(epollfd != -1);
     addInFd(epollfd, listenfd, true);
     addInFd(epollfd, STDIN_FILENO, true);
-    ares_channel channel;
-    ret = ares_init(&channel);
-    if(ret != ARES_SUCCESS)
-    {
-        printf("ares_init error.\n");
-        return 0;
-    }
+    ares_channel channel = NULL;
+    // ret = ares_init(&channel);
+    // if(ret != ARES_SUCCESS)
+    // {
+    //     printf("ares_init error.\n");
+    //     return 0;
+    // }
 
     struct ares_options options;
     int optmask = ARES_OPT_FLAGS;
@@ -124,6 +171,8 @@ int main(void)
         cout << "ares_init_options error: " << ares_strerror(status) << endl;
         return 0;
     }
+
+    // ares_set_socket_callback(channel, ares_socket_create_callback, NULL);
 
     struct sockaddr_in sa = {};
     string domain = "www.google.com";
@@ -144,20 +193,20 @@ int main(void)
     ares_gethostbyname(channel, "www.ifeng.com", AF_INET, dns_callback, &res);
     ares_gethostbyname(channel, "www.suning.com", AF_INET, dns_callback, &res);
     ares_socket_t socks[ARES_GETSOCK_MAXNUM];
-    int dns_sockfd;
-    int bitmask = ares_getsock(channel, socks, ARES_GETSOCK_MAXNUM);
-    for (int i = 0; i < ARES_GETSOCK_MAXNUM; i++)
-    {
-        dns_sockfd = socks[0];
-        if (ARES_GETSOCK_READABLE(bitmask, i))
-        {
-            addInFd(epollfd, socks[i], true);
-        }
-        if (ARES_GETSOCK_WRITABLE(bitmask, i))
-        {
-            addOutFd(epollfd, socks[i]);
-        }
-    }
+    // int dns_sockfd;
+    // int bitmask = ares_getsock(channel, socks, ARES_GETSOCK_MAXNUM);
+    // for (int i = 0; i < ARES_GETSOCK_MAXNUM; i++)
+    // {
+    //     dns_sockfd = socks[0];
+    //     if (ARES_GETSOCK_READABLE(bitmask, i))
+    //     {
+    //         addInFd(epollfd, socks[i], true);
+    //     }
+    //     if (ARES_GETSOCK_WRITABLE(bitmask, i))
+    //     {
+    //         addOutFd(epollfd, socks[i]);
+    //     }
+    // }
     
     while(1)
     {
@@ -199,7 +248,7 @@ int main(void)
                 cout << "input host: " << host << endl;
                 ares_gethostbyname(channel, host.c_str(), AF_INET, dns_callback, &res);
             }
-            else if(sockfd == dns_sockfd)
+            else if(sockfd == 10)
             {
                 printf("%d, dns_sock trigger once, %s.\n", sockfd, __TIME__);
                 ares_process_fd(channel, sockfd, ARES_SOCKET_BAD);

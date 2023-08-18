@@ -1,7 +1,36 @@
 #include "eventloop.h"
+#include "channel.h"
+#include <ares.h>
+#include <cstddef>
+#include <memory>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+#include <sys/socket.h>
 #include <thread>
+
+EventLoop::EventLoop() : 
+        epollfd_(epoll_create1(EPOLL_CLOEXEC)), 
+        evfd_(eventfd(0, EFD_NONBLOCK)),
+        socket_channel_map_(),
+        ares_channel_(NULL)
+{
+    LOG_INFO("event loop created ", epollfd_, " ", evfd_);
+    struct ares_options options;
+    int optmask = ARES_OPT_FLAGS;
+    options.flags = ARES_FLAG_NOCHECKRESP;
+    options.flags |= ARES_FLAG_STAYOPEN;
+    options.flags |= ARES_FLAG_IGNTC; // UDP only
+
+    int status = ares_init_options(&ares_channel_, &options, optmask);
+    if(status != ARES_SUCCESS)
+    {
+        LOG_ERR("ares_init_options error: ", ares_strerror(status));
+        assert(0);
+    }
+    // socket create: only when ares_gethostname called, then the callback will run
+    // ares_gethostname dns_callback should not be NULL
+    ares_set_socket_callback(ares_channel_, &EventLoop::ares_socket_create_callback, this);
+}
 
 void EventLoop::setNewSocket(int fd)
 {
@@ -23,14 +52,36 @@ void EventLoop::handleSocketQueue()
     }
 }
 
+int EventLoop::ares_socket_create_callback(int sock, int type, void *data)
+{
+    cout << "event loop ares socket create callback: " << sock << endl;
+    // create dns query socket
+    EventLoop* loop = (EventLoop*)data;
+    loop->setDnsChannel(sock);
+    return 0;
+}
+
+void EventLoop::setDnsChannel(int sock)
+{
+    epollAddFd(sock);
+    std::shared_ptr<Channel> channel = std::make_shared<Channel>(this, sock);
+    channel->set_read();
+    channel->set_read_callback(std::bind(&EventLoop::handleDnsRead, this, sock));
+    socket_channel_map_[sock] = channel;
+}
+
+void EventLoop::handleDnsRead(int sock)
+{
+    LOG_INFO("handle dns read ", sock);
+    ares_process_fd(ares_channel_, sock, ARES_SOCKET_BAD);
+}
+
 void EventLoop::setNewChannel(int fd, std::shared_ptr<Channel> channel)
 {
-    cout << "set new channel: " << fd << endl;
-    cout << channel.use_count() << endl;
-    socket_channel_map_[fd] = nullptr;
-
+    socket_channel_map_[fd] = channel;
+    // dns_callback will execute after ares_process or ares_process_fd called 
+    ares_gethostbyname(ares_channel_, "example.com", AF_INET, dns_callback, NULL);
     epollAddFd(fd);
-    cout << "set new channel fd: " << fd << endl;
 }
 
 void EventLoop::epollAddFd(int fd)
@@ -52,15 +103,11 @@ void EventLoop::epollModFd(int fd, int ev)
 void EventLoop::epollDelFd(int fd)
 {
     epoll_ctl(epollfd_, EPOLL_CTL_DEL, fd, 0);
-    if(socket_channel_map_.count(fd))
-    {
-        socket_channel_map_.erase(fd);
-        close(fd);
-    }
+
+    socket_channel_map_.erase(fd);
     if(socket_http_map_.count(fd))
     {
         socket_http_map_.erase(fd);
-        close(fd);
     }
 }
 

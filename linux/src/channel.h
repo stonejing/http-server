@@ -25,29 +25,27 @@ public:
     void handleEvent();
     void set_read_callback(EventCallback&& cb)
     {
-        read_callback = cb; 
+        read_callback_ = cb; 
     }
     void set_write_callback(EventCallback&& cb)
     {
-        write_callback = cb;
+        write_callback_ = cb;
     }
     void set_error_callback(EventCallback&& cb)
     {
-        error_callback = cb;
+        error_callback_ = cb;
     }
 
-    int get_event();
-    void add_event();
-    void set_event(int ev);
+    void set_read();
+    void set_write();
 
 private:
     CLogger& Log = CLogger::getInstance();
     EventLoop* loop_;
-    int fd;
-    int epollfd;
-    int event;
+    int fd_;
+    int event_;
     // for poll ,there is revent, but for epoll, it is no use.
-    EventCallback read_callback;
-    EventCallback write_callback;
-    EventCallback error_callback;    
+    EventCallback read_callback_;
+    EventCallback write_callback_;
+    EventCallback error_callback_;    
 };

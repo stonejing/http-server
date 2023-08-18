@@ -11,16 +11,27 @@
 #include <cstdio>
 #include <iostream>
 
+using namespace std;
+
 class dns_resolver_t
 {
 public:
     dns_resolver_t() : channel_(NULL)
     {
-        int ret = ares_init(&channel_);
-        if (ret != ARES_SUCCESS)
-        {
-            err_info_ = ares_strerror(ret);
-        }
+        // int ret = ares_init(&channel_);
+        // if (ret != ARES_SUCCESS)
+        // {
+        //     err_info_ = ares_strerror(ret);
+        // }
+        struct ares_options options;
+        int optmask = ARES_OPT_FLAGS;
+        options.flags = ARES_FLAG_NOCHECKRESP;
+        options.flags |= ARES_FLAG_STAYOPEN;
+        options.flags |= ARES_FLAG_IGNTC; // UDP only
+        
+        int status = ares_init_options(&channel_, &options, optmask);
+        ::ares_set_socket_callback(channel_, &dns_resolver_t::ares_socket_create_callback, this);
+        cout << "construct over." << endl;
     }
 
     ~dns_resolver_t()
@@ -35,7 +46,6 @@ public:
     {
         dns_res_t res = {NULL, addr, addr_len};
         ares_gethostbyname(channel_, domain.c_str(), af, dns_callback, &res);
-
         struct timeval last, now;
         gettimeofday(&last, NULL);
         int nfds = 1;
@@ -79,6 +89,8 @@ private:
     dns_resolver_t(const dns_resolver_t&);
     dns_resolver_t& operator=(const dns_resolver_t&);
 
+    int dns_fd = -1;
+
     struct dns_res_t
     {
         const char* error_info;
@@ -86,10 +98,17 @@ private:
         size_t len;
     };
 
+    static int ares_socket_create_callback(int sock, int type, void *data)
+    {
+        dns_resolver_t* dr = (dns_resolver_t*)data;
+        dr->dns_fd = sock;
+        cout << "socket create callback: " << sock << endl;
+        return 0;
+    }
+
     static void dns_callback(void* arg, int status, int timeouts, struct hostent* hptr)
     {
         // TODO: get the first address
-
         printf("dns_callback status(%d) timeouts(%d)\n", status, timeouts);
 
         dns_res_t& res = *(dns_res_t*)arg;
@@ -119,7 +138,7 @@ private:
         }
     }
 
-    static int dns_wait_resolve(ares_channel channel_, int timeout_ms)
+    int dns_wait_resolve(ares_channel channel_, int timeout_ms)
     {
         if (timeout_ms < 0)
         {
@@ -134,33 +153,36 @@ private:
         ares_socket_t socks[ARES_GETSOCK_MAXNUM];
         struct pollfd pfd[ARES_GETSOCK_MAXNUM];
         int i;
-        int num = 0;
+        int num = 1;
 
-        bitmask = ares_getsock(channel_, socks, ARES_GETSOCK_MAXNUM);
+        pfd[0].events |= POLLIN | POLLRDNORM;
+        pfd[0].fd = dns_fd;
 
-        for (i = 0; i < ARES_GETSOCK_MAXNUM; i++)
-        {
-            pfd[i].events = 0;
-            pfd[i].revents = 0;
-            if (ARES_GETSOCK_READABLE(bitmask, i))
-            {
-                pfd[i].fd = socks[i];
-                pfd[i].events |= POLLRDNORM | POLLIN;
-            }
-            if (ARES_GETSOCK_WRITABLE(bitmask, i))
-            {
-                pfd[i].fd = socks[i];
-                pfd[i].events |= POLLWRNORM | POLLOUT;
-            }
-            if (pfd[i].events != 0)
-            {
-                num++;
-            }
-            else
-            {
-                break;
-            }
-        }
+        // bitmask = ares_getsock(channel_, socks, ARES_GETSOCK_MAXNUM);
+
+        // for (i = 0; i < ARES_GETSOCK_MAXNUM; i++)
+        // {
+        //     pfd[i].events = 0;
+        //     pfd[i].revents = 0;
+        //     if (ARES_GETSOCK_READABLE(bitmask, i))
+        //     {
+        //         pfd[i].fd = socks[i];
+        //         pfd[i].events |= POLLRDNORM | POLLIN;
+        //     }
+        //     if (ARES_GETSOCK_WRITABLE(bitmask, i))
+        //     {
+        //         pfd[i].fd = socks[i];
+        //         pfd[i].events |= POLLWRNORM | POLLOUT;
+        //     }
+        //     if (pfd[i].events != 0)
+        //     {
+        //         num++;
+        //     }
+        //     else
+        //     {
+        //         break;
+        //     }
+        // }
 
         if (num)
         {
@@ -217,4 +239,5 @@ int main()
         printf("dns_resolver_t init err(%s)\n", dr.error_info().c_str());
         return 0;
     }
+    return 0;
 }

@@ -1,42 +1,41 @@
 #include "channel.h"
 
 Channel::Channel(EventLoop* loop, int fd) : 
-        fd(fd), 
-        loop_(loop)
+        fd_(fd), 
+        loop_(loop),
+        event_(EPOLLIN)
 {
     // LOG_INFO("add channel: ", fd);
 }
 
-int Channel::get_event()
+void Channel::set_read()
 {
-    return event;
+    loop_->epollModFd(fd_, EPOLLIN);
+    event_ = EPOLLIN;
 }
-void Channel::add_event()
+
+void Channel::set_write()
 {
-    loop_->epollAddFd(fd);
-}
-void Channel::set_event(int ev)
-{
-    loop_->epollModFd(fd, ev);
-    event = ev;
+    loop_->epollModFd(fd_, EPOLLOUT);
+    event_ = EPOLLOUT;
 }
 
 void Channel::handleEvent()
 {
-    if(event & EPOLLIN)
+    if(event_ & EPOLLIN)
     {
-        read_callback();
+        read_callback_();
     }
-    else if(event & EPOLLOUT)
+    else if(event_ & EPOLLOUT)
     {
-        write_callback();
+        write_callback_();
     }
-    else if(event & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
+    else if(event_ & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
     {
-        error_callback();
+        error_callback_();
     }
     else 
     {
-        LOG_ERR("channel handle event unexpected. %d 神仙难救", fd);
+        LOG_ERR("channel handle event unexpected. %d 神仙难救", fd_);
     }
 }

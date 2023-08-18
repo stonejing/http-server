@@ -13,3 +13,4 @@ set(sources
 
 add_executable(main ${sources})
 target_link_libraries(main pthread)
+target_link_libraries(main cares)

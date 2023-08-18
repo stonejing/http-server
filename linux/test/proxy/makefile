@@ -8,3 +8,7 @@ cares-select:
 cares-epoll:
 	g++ -o cares-epoll.out c-ares-epoll.cpp -lcares
 	./cares-epoll.out domain
+
+cares-poll:
+	g++ -o cares-poll.out c-ares-poll.cpp -lcares
+	./cares-poll.out
