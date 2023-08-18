@@ -108,7 +108,6 @@ void EventLoop::loop()
     epollAddFd(evfd_);
     while(1)
     {
-        cout << "epoll wait" << endl;
         int number = epoll_wait(epollfd_, events_, MAX_EVENT_NUMBER, -1);
         if((number < 0 ) && (errno != EINTR))
         {

@@ -19,28 +19,46 @@ void HttpProxy::init(string& request, string& host, ares_channel* channel, Event
 
 bool HttpProxy::bufferRead()
 {
-    vector<char> buffer_(BUFFER_SIZE);
-    while(true)
-    {
-        int bytes_read = ::recv(connect_socket_, buffer_.data(), BUFFER_SIZE, 0);
-        if(bytes_read == -1)
-        {
-            // read buffer empty, wait for another chance
-            if(errno == EAGAIN || errno == EWOULDBLOCK)
-            {
-                return true;
-            }
-            cout << "read error " << errno << endl;
-            return false;
+    // vector<char> buffer_(BUFFER_SIZE);
+    // while(true)
+    // {
+    //     int bytes_read = ::recv(connect_socket_, buffer_.data(), BUFFER_SIZE, 0);
+    //     if(bytes_read == -1)
+    //     {
+    //         // read buffer empty, wait for another chance
+    //         if(errno == EAGAIN || errno == EWOULDBLOCK)
+    //         {
+    //             return true;
+    //         }
+    //         cout << "read error " << errno << endl;
+    //         return false;
+    //     }
+    //     // remote close connection
+    //     else if(bytes_read == 0)
+    //     {
+    //         cout << "remote close" << endl;
+    //         return false;
+    //     }   
+    //     response_.append(std::string(buffer_.begin(), buffer_.begin() + bytes_read));
+    // }
+
+    char buffer[1024];
+    memset(buffer, 0, sizeof(buffer));
+    while (true) {
+        memset(buffer, 0, sizeof(buffer));
+        int bytesReceived = recv(connect_socket_, buffer, sizeof(buffer), 0);
+        if (bytesReceived < 0) {
+            assert(0);
         }
-        // remote close connection
-        else if(bytes_read == 0)
+        else if(bytesReceived == 0)
         {
             cout << "remote close" << endl;
-            return false;
-        }   
-        response_.append(std::string(buffer_.begin(), buffer_.begin() + bytes_read));
+            break;
+        }
+        response_ += std::string(buffer, bytesReceived);
     }
+    http_->set_response(response_);
+    http_->getChannel()->set_write();
     http_->set_response(response_);
     http_->getChannel()->set_write();
     cout << "http proxy response: " << response_ << endl;
@@ -89,23 +107,23 @@ void HttpProxy::connect_remote(struct in_addr* remote_addr)
     send(connect_socket_, request_.c_str(), request_.size(), 0);
 
     // Forward the response from the destination server back to the client
-    char buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
-    while (true) {
-        memset(buffer, 0, sizeof(buffer));
-        int bytesReceived = recv(connect_socket_, buffer, sizeof(buffer), 0);
-        if (bytesReceived < 0) {
-            assert(0);
-        }
-        else if(bytesReceived == 0)
-        {
-            cout << "remote close" << endl;
-            break;
-        }
-        response_ += std::string(buffer, bytesReceived);
-    }
-    http_->set_response(response_);
-    http_->getChannel()->set_write();
+    // char buffer[1024];
+    // memset(buffer, 0, sizeof(buffer));
+    // while (true) {
+    //     memset(buffer, 0, sizeof(buffer));
+    //     int bytesReceived = recv(connect_socket_, buffer, sizeof(buffer), 0);
+    //     if (bytesReceived < 0) {
+    //         assert(0);
+    //     }
+    //     else if(bytesReceived == 0)
+    //     {
+    //         cout << "remote close" << endl;
+    //         break;
+    //     }
+    //     response_ += std::string(buffer, bytesReceived);
+    // }
+    // http_->set_response(response_);
+    // http_->getChannel()->set_write();
     channel_ = make_shared<Channel>(loop_, connect_socket_);
     channel_->set_read();
     channel_->set_write_callback(std::bind(&HttpProxy::bufferWrite, this));
