@@ -2,6 +2,7 @@
 #include <string>
 #include <memory>
 #include <thread>
+#include <functional>
 #include "assert.h"
 
 #include "log.h"

@@ -1,12 +1,5 @@
 #include "eventloop.h"
-#include "channel.h"
-#include <ares.h>
-#include <cstddef>
-#include <memory>
-#include <sys/epoll.h>
-#include <sys/eventfd.h>
-#include <sys/socket.h>
-#include <thread>
+#include "utils.h"
 
 EventLoop::EventLoop() : 
         epollfd_(epoll_create1(EPOLL_CLOEXEC)), 
@@ -54,8 +47,6 @@ void EventLoop::handleSocketQueue()
 
 int EventLoop::ares_socket_create_callback(int sock, int type, void *data)
 {
-    cout << "event loop ares socket create callback: " << sock << endl;
-    // create dns query socket
     EventLoop* loop = (EventLoop*)data;
     loop->setDnsChannel(sock);
     return 0;
@@ -78,9 +69,9 @@ void EventLoop::handleDnsRead(int sock)
 
 void EventLoop::setNewChannel(int fd, std::shared_ptr<Channel> channel)
 {
+    cout << "set new channel fd: " << fd << endl;
     socket_channel_map_[fd] = channel;
-    // dns_callback will execute after ares_process or ares_process_fd called 
-    ares_gethostbyname(ares_channel_, "example.com", AF_INET, dns_callback, NULL);
+    setnonblocking(fd);
     epollAddFd(fd);
 }
 
@@ -117,6 +108,7 @@ void EventLoop::loop()
     epollAddFd(evfd_);
     while(1)
     {
+        cout << "epoll wait" << endl;
         int number = epoll_wait(epollfd_, events_, MAX_EVENT_NUMBER, -1);
         if((number < 0 ) && (errno != EINTR))
         {

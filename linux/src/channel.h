@@ -5,8 +5,6 @@
 #include <sys/epoll.h>
 
 #include "log.h"
-#include "eventloop.h"
-#include "utils.h"
 
 class EventLoop;
 class Http;

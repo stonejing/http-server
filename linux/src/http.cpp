@@ -1,6 +1,8 @@
 #include "http.h"
+#include "eventloop.h"
+#include "channel.h"
 
-class EventLoop;
+#include "httpproxy.h"
 
 Http::Http(EventLoop* loop, int fd) : sockfd_(fd), 
                     buffer_(std::vector<char>(8096)),
@@ -27,9 +29,14 @@ void Http::init()
     channel_->set_write_callback(std::bind(&Http::HTTPWrite, this));
 }
 
-void Http::handle_event()
+shared_ptr<Channel> Http::getChannel()
 {
-    channel_->handleEvent();
+    return channel_;
+}
+
+EventLoop* Http::getLoop()
+{
+    return loop_;
 }
 
 /*
@@ -40,6 +47,14 @@ void Http::handle_event()
     HttpRequest status: -1 error, 0 not determined, 1 http request, 2 http proxy, 3 https proxy
     according to the status, choose different function to handle the request
 */
+void Http::proxyRead()
+{
+    request_.get_information(keep_alive_, URL_, headers_);
+    keep_alive_ = false;
+    http_proxy_.init(recv_buffer_, headers_["host"], loop_->get_ares_channel(), loop_, this);
+}
+
+
 void Http::handleRead()
 {
     LOG_INFO("handle read ", sockfd_);
@@ -63,21 +78,19 @@ void Http::handleRead()
             case 2:
             {
                 LOG_INFO("http proxy");
-                request_.get_information(keep_alive_, URL_, headers_);
-                keep_alive_ = false;
-                http_proxy_.set_request(recv_buffer_);
-                recv_buffer_.clear();
-                http_proxy_.set_information(headers_["host"], URL_);
-                
-                http_response_ = std::move(http_proxy_.get_response());
 
-                channel_->set_write();
+                // http_proxy_.set_information(headers_["host"], URL_);
+                // http_response_ = std::move(http_proxy_.get_response());
+                proxyRead();
+                channel_->set_read();
+                // loop_->epollDelFd(sockfd_);
                 break;
             }
             case 3:
             {
                 // LOG_INFO("https proxy");
-                channel_->set_write();
+                // channel_->set_write();
+                loop_->epollDelFd(sockfd_);
                 break;
             }
             case -1:

@@ -5,9 +5,6 @@
 #include "httpresponse.h"
 #include "httpproxy.h"
 
-#include "eventloop.h"
-#include "channel.h"
-
 #include <future>
 #include <vector>
 #include <string>
@@ -17,6 +14,7 @@
 const int BUFFER_SIZE = 4096;
 
 class EventLoop;
+class HttpProxy;
 class Channel;
 
 class Http
@@ -30,8 +28,9 @@ public:
     }
     
     void init();
-    void handle_event();
+    shared_ptr<Channel> getChannel();
     void registerChannel();
+    EventLoop* getLoop();
 public:
     void handleRead();
     void HTTPWrite();
@@ -43,6 +42,11 @@ public:
     // set buffer_ size to 4096, append buffer_ to HTTP request     
     bool bufferRead();
     bool bufferWrite();
+
+    void set_response(string& response)
+    {
+        http_response_ = response;
+    }
 
 private:
     std::shared_ptr<Channel> channel_; 

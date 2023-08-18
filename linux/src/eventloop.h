@@ -18,10 +18,10 @@
 #include <sys/eventfd.h>
 #include <ares.h>
 
-#include "http.h"
-#include "channel.h"
 #include "log.h"
 #include "utils.h"
+#include "http.h"
+#include "channel.h"
 
 #define MAX_EVENT_NUMBER 5000
 
@@ -42,17 +42,6 @@ public:
 
     static int ares_socket_create_callback(int sock, int type, void *data);
 
-    static void dns_callback(void* arg, int status, int timeouts, struct hostent* host)
-    {
-        if (status == ARES_SUCCESS)
-        {
-            puts(host->h_name);
-            puts(inet_ntoa(*(struct in_addr*)host->h_addr));
-        }
-        else
-            std::cout << "lookup failed: " << ares_strerror(status) << std::endl;
-    }
-
     void setDnsChannel(int sock);
     void handleDnsRead(int sock);
 
@@ -64,6 +53,11 @@ public:
     void epollAddFd(int fd);
     void epollModFd(int fd, int ev);
     void epollDelFd(int fd);
+
+    ares_channel* get_ares_channel()
+    {
+        return &ares_channel_;
+    }
 
 private:
     CLogger& Log = CLogger::getInstance();

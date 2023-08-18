@@ -1,5 +1,7 @@
 #include "channel.h"
 
+#include "eventloop.h"
+
 Channel::Channel(EventLoop* loop, int fd) : 
         fd_(fd), 
         loop_(loop),
