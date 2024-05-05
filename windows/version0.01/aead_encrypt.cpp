@@ -101,7 +101,6 @@ void decrypt_reset_iv(cipher_ctx_t *ctx)
     increase_nonce(ctx->nonce, 12);
 }
 
-
 bool aead_text_encrypt(cipher_ctx_t *ctx, const uint8_t *plaintext, int plaintext_len,
                 uint8_t *ciphertext, int *ciphertext_len)
 {
@@ -160,11 +159,6 @@ bool aead_text_decrypt(cipher_ctx_t *ctx, const uint8_t *ciphertext,
     return true;
 }
 
-void aead_init()
-{
-    return;
-}
-
 void aead_encrypt(cipher_ctx_t *ctx, uint8_t *plaintext, int plaintext_len, uint8_t *ciphertext, int *ciphertext_len)
 {
     if(!ctx->init)
@@ -172,9 +166,14 @@ void aead_encrypt(cipher_ctx_t *ctx, uint8_t *plaintext, int plaintext_len, uint
         // evp bytes to key
         uint8_t *ikey = (uint8_t*)malloc(16);
         evp_bytes_to_key((const uint8_t*)"stonejing", strlen("stonejing"), ikey, 16);
+        uint8_t encrypt_salt[16] = {0x63, 0xb4, 0x60, 0xd3, 0xce, 0x25, 0x0f, 0x60, 0xc0, 0x3f, 0xa9, 0xca, 0x33, 0x93, 0xcb, 0xd5};
         // generate random salt
         ctx->salt = (uint8_t*)malloc(16);
         rand_bytes(ctx->salt, 16);
+        for(int i = 0; i < 16; i++)
+        {
+            ctx->salt[i] = encrypt_salt[i];
+        }
         // generate nonce from 0
         ctx->nonce = (uint8_t*)calloc(1, 12);
         // generate subkey from (key, salt, info)
@@ -228,28 +227,19 @@ void aead_encrypt(cipher_ctx_t *ctx, uint8_t *plaintext, int plaintext_len, uint
         uint8_t prefix[2] = { 0 };
         prefix[0] = plaintext_len >> 8;
         prefix[1] = plaintext_len;
-        // printf("prefix: ");
-        // debug_hex(prefix, 2);
         int chunk_len = 0;
 
         int temp1;
         encrypt_reset_iv(ctx);
         aead_text_encrypt(ctx, prefix, 2, ciphertext, &temp1);
         
-        // log_info("aead length encrypted.");
-        // increase_nonce(ctx->nonce, 12);
-
         encrypt_reset_iv(ctx);
         int cipher_len;
         aead_text_encrypt(ctx, plaintext, plaintext_len, ciphertext + 2 + 16, &cipher_len);
 
-        // increase_nonce(ctx->nonce, 12);
-        // log_info("aead payload encrypt.");
         chunk_len = temp1 + cipher_len;
 
         *ciphertext_len = chunk_len;
-
-        // log_info("ciphertext_len: %d\n", *ciphertext_len);
     }
     return;
 }

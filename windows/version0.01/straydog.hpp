@@ -10,7 +10,7 @@
 #include "crypto.hpp"
 #include "aead_encrypt.hpp"
 
-#define PORT 5005
+#define PORT 8000
 #define DATA_BUFSIZE 8192
 
 typedef struct _SOCKET_INFORMATION

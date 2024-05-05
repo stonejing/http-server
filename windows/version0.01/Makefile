@@ -10,7 +10,8 @@ event_select:
 	g++ -o event_select -C WSAEventSelect_tcp_server.cpp -lws2_32 
 socks5_select:
 	g++ -o socks5_select -C socks5_select.cpp encrypt.cpp -lws2_32 \
-		-L"D:/Program\ Files (x86)\msys64\mingw64\lib" -lcrypto -lssl
+		# -L"D:/Program\ Files (x86)\msys64\mingw64\lib" -lcrypto -lssl
+		-L"D:\Qt\Tools\OpenSSL\Win_x64\lib" -lcrypto -lssl
 memory_test:
 	g++ -o memory_test -C memory_test.cpp
 dbg:

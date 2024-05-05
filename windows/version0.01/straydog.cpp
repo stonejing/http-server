@@ -23,7 +23,7 @@ SOCKET create_and_bind(INT Port)
     }
     else
     {
-        log_info("WSAStartup() is OK!");
+        // log_info("WSAStartup() is OK!");
     }
 
     if ((ListenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET)
@@ -33,7 +33,7 @@ SOCKET create_and_bind(INT Port)
     }
     else
     {
-        log_info("WSASocket() is OK!");
+        // log_info("WSASocket() is OK!");
     }
     InternetAddr.sin_family = AF_INET;
     InternetAddr.sin_port = htons(Port);
@@ -46,7 +46,7 @@ SOCKET create_and_bind(INT Port)
     }
     else
     {
-        log_info("bind() is OK!");
+        // log_info("bind() is OK!");
     }
     if (listen(ListenSocket, 5))
     {
@@ -55,7 +55,7 @@ SOCKET create_and_bind(INT Port)
     }
     else
     {
-        log_info("listen() is OK!");
+        // log_info("listen() is OK!");
     }
     // Change the socket mode on the listening socket from blocking to
     // non-block so the application will not block waiting for requests
@@ -66,9 +66,9 @@ SOCKET create_and_bind(INT Port)
     }
     else
     {
-        log_info("ioctlsocket() is OK!");
+        // log_info("ioctlsocket() is OK!");
     }
-    log_info("start server in 0.0.0.0:%d", Port);
+    // log_info("start server in 0.0.0.0:%d", Port);
     return ListenSocket;
 }
 
@@ -78,8 +78,13 @@ int shadowsocks_handshake(char* shadowsocks_handshake_buffer, int len, char* cip
     int ciphertext_len;
     aead_encrypt(SI->ctx_enc, (uint8_t*)shadowsocks_handshake_buffer + 3, len - 3, (uint8_t*)cipher_buffer, &ciphertext_len);
 
+    // printf("cipher len: %d\n", ciphertext_len);
+    // debug_hexstring("salt", (uint8_t*)cipher_buffer, 16);
+    // debug_hexstring("payload length", (uint8_t*)cipher_buffer + 16, 18);
+    // debug_hexstring("payload", (uint8_t*)cipher_buffer + 16 + 18, ciphertext_len - 16 - 18);
+    
     send(SI->ConnectSocket, cipher_buffer, ciphertext_len, 0);
-    log_info("send ss handshake.");
+    // log_info("send ss handshake.");
     return 1;
     
     // if(shadowsocks_handshake_buffer[3] == 0x01)
@@ -116,7 +121,7 @@ int shadowsocks_handshake(char* shadowsocks_handshake_buffer, int len, char* cip
 
 int main(int argc, char **argv)
 {
-    SOCKET ListenSocket = create_and_bind(5005);
+    SOCKET ListenSocket = create_and_bind(8000);
     SOCKET AcceptSocket;
     SOCKADDR_IN InternetAddr;
     WSADATA wsaData;
@@ -175,11 +180,11 @@ int main(int argc, char **argv)
             Total--;
             if ((AcceptSocket = accept(ListenSocket, NULL, NULL)) != INVALID_SOCKET)
             {
-                log_warn("create new socket connection**********");
+                // log_warn("create new socket connection**********");
                 // socks5 protocol 握手
                 int recv_local_len = 0;
                 recv_local_len = recv(AcceptSocket, socks_handshake_buffer, 1024, 0);
-                log_info("recv_local_len: %d", recv_local_len);
+                // log_info("recv_local_len: %d", recv_local_len);
                 if(recv_local_len == -1) continue;
                 log_info("recv_local_len: %d    ", recv_local_len);
                 // print_binary(socks_handshake_buffer, recv_local_len);
@@ -201,7 +206,7 @@ int main(int argc, char **argv)
                 struct sockaddr_in RemoteServer;
                 RemoteServer.sin_family = AF_INET;
                 RemoteServer.sin_addr.S_un.S_addr=  inet_addr("127.0.0.1");
-                RemoteServer.sin_port = htons(5000);
+                RemoteServer.sin_port = htons(7000);
 
                 if (connect(ConnectSocket, (SOCKADDR *)&RemoteServer, sizeof(RemoteServer)) < 0)
                 {
@@ -224,11 +229,13 @@ int main(int argc, char **argv)
                     return 1;
                 }
                 else
-                    log_info("ioctlsocket(FIONBIO) is OK!");
+                {
+                    // log_info("ioctlsocket(FIONBIO) is OK!");
+                }
 
                 LPSOCKET_INFORMATION SocketInfo = CreateSocketInformation(AcceptSocket, ConnectSocket);
                 shadowsocks_handshake(socks_handshake_buffer, recv_local_len, cipher_buffer, SocketInfo);
-                log_info("shadowsocks_handshake is OK!");
+                // log_info("shadowsocks_handshake is OK!");
             }
             else
             {
@@ -285,7 +292,6 @@ int main(int argc, char **argv)
                 else
                 {
                     // int cipher_buffer_len = ss_decrypt((unsigned char*)transfer_buffer, transfer_buffer_len, (unsigned char*)cipher_buffer, SocketInfo->enc_ctx_decrypt);
-
                     int cipher_buffer_len = 0;
                     aead_decrypt(SocketInfo->ctx_dec, (uint8_t*)transfer_buffer, transfer_buffer_len, (uint8_t*)cipher_buffer, &cipher_buffer_len);
 
@@ -312,7 +318,7 @@ int main(int argc, char **argv)
 LPSOCKET_INFORMATION CreateSocketInformation(SOCKET& AcceptSocket, SOCKET& ConnectSocket)
 {
     LPSOCKET_INFORMATION SI;
-    log_info("Create Socket Information Accept: %d, Connect: %d", AcceptSocket, ConnectSocket);
+    // log_info("Create Socket Information Accept: %d, Connect: %d", AcceptSocket, ConnectSocket);
     // if ((SI = (LPSOCKET_INFORMATION)GlobalAlloc(GPTR, sizeof(SOCKET_INFORMATION))) == NULL)
     // {
     //     log_info("GlobalAlloc() failed with error %d", GetLastError());
@@ -326,7 +332,9 @@ LPSOCKET_INFORMATION CreateSocketInformation(SOCKET& AcceptSocket, SOCKET& Conne
         return FALSE;
     }
     else
-        log_info("GlobalAlloc() for SOCKET_INFORMATION is OK!");
+    {
+        // log_info("GlobalAlloc() for SOCKET_INFORMATION is OK!");
+    }
     // Prepare SocketInfo structure for use
     SI->AcceptSocket = AcceptSocket;
     SI->ConnectSocket = ConnectSocket;
@@ -372,7 +380,7 @@ void FreeSocketInformation(DWORD Index)
     DWORD i;
     closesocket(SI->AcceptSocket);
     closesocket(SI->ConnectSocket);
-    // log_info("Closing socket number %d, %d", SI->AcceptSocket, SI->ConnectSocket);
+    log_info("Closing socket number %d, %d", SI->AcceptSocket, SI->ConnectSocket);
     // free(SI->enc_ctx_decrypt);
     // free(SI->enc_ctx_encrypt);
 
