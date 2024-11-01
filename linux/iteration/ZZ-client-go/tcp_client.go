@@ -40,10 +40,11 @@ func main() {
 	start := time.Now()
 	fmt.Println("client: 127.0.0.1:8000")
 	ch := make(chan int)
-	for i := 0; i < 50; i++ {
+	num := 500
+	for i := 0; i < num; i++ {
 		go send(i, ch)
 	}
-	for i := 0; i < 50; i++ {
+	for i := 0; i < num; i++ {
 		<-ch
 	}
 	// fmt.Println(<- ch)
