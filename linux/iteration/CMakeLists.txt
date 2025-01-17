@@ -1,5 +1,6 @@
 
-add_subdirectory(01-basic-socket-echo-server)
+add_subdirectory(01-iterative-echo-server)
+add_subdirectory(02-multiprocess-echo-server)
 add_subdirectory(02-select-non-blocking)
 add_subdirectory(03-poll-non-blocking)
 add_subdirectory(03-iterative-udp-server)

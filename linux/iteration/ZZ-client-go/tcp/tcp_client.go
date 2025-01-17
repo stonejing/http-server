@@ -1,8 +1,9 @@
 package main
 
 import (
-	"net"
 	"fmt"
+	"net"
+
 	// "bufio"
 	// "os"
 	"strconv"
@@ -11,9 +12,9 @@ import (
 
 func send(i int, c chan int) {
 	conn, err := net.Dial("tcp", "127.0.0.1:8000")
+	c <- i
 	if err != nil {
 		fmt.Println("err: ", err)
-		c <- i
 		return
 	}
 
@@ -22,17 +23,18 @@ func send(i int, c chan int) {
 
 	_, err = conn.Write([]byte(text))
 	if err != nil {
+		fmt.Println("write failed, err: ", err)
 		return
 	}
 
 	buf := [512]byte{}
-	n, err := conn.Read(buf[:])
+	_, err = conn.Read(buf[:])
 	if err != nil {
 		fmt.Println("recv failed, err: ", err)
 		return
 	}
-	fmt.Println(string(buf[:n]))
-	c <- -1
+	// fmt.Println("recv: ", i)
+	// fmt.Println(string(buf[:n]))
 	return
 }
 
@@ -40,7 +42,7 @@ func main() {
 	start := time.Now()
 	fmt.Println("client: 127.0.0.1:8000")
 	ch := make(chan int)
-	num := 500
+	num := 100
 	for i := 0; i < num; i++ {
 		go send(i, ch)
 	}
